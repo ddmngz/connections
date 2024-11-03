@@ -1,0 +1,230 @@
+.game{
+    display:flex;
+    position: fixed; /* Sit on top of the page content */
+    flex-direction: column;
+    justify-content:center;
+    width: 100%; /* Full width (cover the whole page) */
+    height: 100%; /* Full height (cover the whole page) */
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+  z-index: -0; /* Specify a stack order in case you're using a different order for other elements */
+  cursor: pointer; /* Add a pointer on hover */
+
+}
+
+.board {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  height: calc(3 * 8px + 4 * 80px);
+  background-color: #FFFFFF;
+  padding: 20px;
+  gap:8px;
+  width: calc(3 * 8px + 4 * 150px);
+  min-height: 0;
+  min-width: 0;
+  margin:auto;
+  position:relative;
+  /*left: 400px;*/
+  /*position:absolute;*/
+  column-gap: 8px;
+  row-gap: 8px;
+
+  z-index: 1; /* Specify a stack order in case you're using a different order for other elements */
+}
+
+.card {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
+  border-radius: 6px;
+  background-color: rgb(239, 239, 230);
+  padding: 20px;
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  cursor: default;
+  text-transform: uppercase;
+  font-family: "Libre Franklin", sans-serif;
+  font-style: normal; 
+  z-index: -1; /* Specify a stack order in case you're using a different order for other elements */
+  position:sticky;
+}
+
+
+
+
+.selected {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
+
+  border-radius: 6px;
+  background-color: var(--connections-extra-dark-beige);
+  color:#ffffff;
+  padding: 20px;
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  font-family: "Libre Franklin", sans-serif;
+  font-style: normal;
+
+  cursor: default;
+}
+
+.matched_yellow{
+ -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
+
+  border-radius: 6px;
+  background-color: var(--connections-yellow);
+  padding: 20px;
+  text-align: center;
+  text-transform: uppercase;
+  cursor: default;
+}
+
+.matched_purple{
+ -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
+
+  border-radius: 6px;
+  background-color: var(--connections-maroon);
+  text-align: center;
+
+  padding: 20px;
+  text-transform: uppercase;
+  cursor: default;
+}
+
+.matched_blue{
+  border-radius: 6px;
+  background-color: var(--connections-blue);
+
+  padding: 20px;
+  text-align: center;
+  text-transform: uppercase;
+  cursor: default;
+}
+
+.matched_green{
+     -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
+    padding:20px;
+  border-radius: 6px;
+  background-color: var(--connections-green);
+  text-align: center;
+  text-transform: uppercase;
+  cursor: default;
+}
+
+
+.remaining_tries{
+
+  border-radius: 6px;
+  width: 20%;
+  margin:auto;
+  align:center;
+  text-align: center;
+  font-weight: 600;
+  cursor: default;
+}
+
+ .dot {
+  margin:auto;
+  height: 15px;
+  width: 15px;
+  background-color: var(--connections-extra-dark-beige);
+  border-radius: 50%;
+  display: inline-block;
+}
+
+ .deactivated-dot {
+  margin:auto;
+  height: 15px;
+  width: 15px;
+  background-color: var(--connections-dark-beige);
+  border-radius: 50%;
+  display:inline-block;
+}
+
+.button{
+  font-size:15px;
+  padding:20px;
+  line-height:10px;
+  border-radius: 60px;
+  width: max-content;
+  height: 10px;
+  margin:auto;
+  align:center;
+  cursor: default;
+
+  text-align: center;
+  font-weight: 500;
+  border-style:solid;
+  border-color:var(--connections-extra-dark-beige);
+  border-width:thin;
+}
+
+.hidden_button{
+  font-size:15px;
+  padding:20px;
+  line-height:10px;
+  border-radius: 60px;
+  width: max-content;
+  height: 10px;
+  margin:auto;
+  align:center;
+  cursor: default;
+
+  text-align: center;
+  font-weight: 500;
+  border-style:solid;
+  border-color:var(--connections-dark-beige);
+  color:var(--connections-dark-beige);
+  border-width:thin;
+}
+
+.Buttons{
+  display: flex;
+  flex-direction: row;
+  align-items:center;
+  justify-content:center;
+}
+
+.remaining_tries{
+    display: flex;
+    font-weight:200;
+    font-size:15px;
+    font-family:"Verdana";
+    margin-bottom:20px;
+}
+
+
+:root{
+  --connections-light-beige: #efefe6;
+  --connections-beige: #cfcfbf;
+  --connections-dark-beige: #a39f95;
+  --connections-darker-beige: #656458;
+  --connections-extra-dark-beige: #5a594e;
+  --connections-yellow: #f9df6d;
+  --connections-maroon: #ba81c5;
+  --connections-blue: #b0c4ef;
+  --connections-green: #a0c35a;
+  --connections-dark-purple: #861cab;
+  --sb-dark-gray: #38383f;
+  font-size: 20px;
+  font-weight: 700;
+    font-family: "Libre Franklin", sans-serif;
+  font-style: normal;
+
+}

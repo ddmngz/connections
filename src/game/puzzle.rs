@@ -1,0 +1,206 @@
+use super::color::AsColor;
+use super::color::Blue;
+use super::color::Color;
+use super::color::Green;
+use super::color::Purple;
+use super::color::Yellow;
+use super::Board;
+use std::array;
+use std::marker::PhantomData;
+use wasm_bindgen::prelude::*;
+use web_sys::console;
+
+pub struct ConnectionPuzzle {
+    yellow: ConnectionSet<Yellow>,
+    blue: ConnectionSet<Blue>,
+    purple: ConnectionSet<Purple>,
+    green: ConnectionSet<Green>,
+}
+
+struct ConnectionSet<Color: AsColor> {
+    theme: String,
+    words: [String; 4],
+    color: PhantomData<Color>,
+}
+
+impl<C: AsColor> ConnectionSet<C> {
+    fn new(theme: &str, words: [&str; 4]) -> Self {
+        let words: [String; 4] = array::from_fn(|index| String::from(words[index]));
+        let color = PhantomData::default();
+        Self {
+            theme: theme.into(),
+            words,
+            color,
+        }
+    }
+}
+
+impl ConnectionPuzzle {
+    pub fn new(
+        yellow: (&str, [&str; 4]),
+        blue: (&str, [&str; 4]),
+        purple: (&str, [&str; 4]),
+        green: (&str, [&str; 4]),
+    ) -> Self {
+        let yellow = ConnectionSet::new(yellow.0, yellow.1);
+        let blue = ConnectionSet::new(blue.0, blue.1);
+        let purple = ConnectionSet::new(purple.0, purple.1);
+        let green = ConnectionSet::new(green.0, green.1);
+
+        Self {
+            yellow,
+            blue,
+            purple,
+            green,
+        }
+    }
+
+    pub fn all_keys(&self) -> [PuzzleKey; 16] {
+        array::from_fn(|index| self.nth(index))
+    }
+
+    fn nth(&self, index: usize) -> PuzzleKey {
+        assert!(index < 16);
+        let color = Color::from_int((index / 4) as u8);
+        //console::log_1(&format!("index {}", index).into());
+        //console::log_1(&format!("mod 4:{}", index % 4).into());
+        PuzzleKey::new(color, index % 4)
+    }
+
+    fn iter(&self) -> PuzzleRef {
+        PuzzleRef::new(self)
+    }
+
+    const fn yellow(&self) -> &ConnectionSet<Yellow> {
+        &self.yellow
+    }
+
+    const fn blue(&self) -> &ConnectionSet<Blue> {
+        &self.blue
+    }
+
+    const fn purple(&self) -> &ConnectionSet<Purple> {
+        &self.purple
+    }
+
+    const fn green(&self) -> &ConnectionSet<Green> {
+        &self.green
+    }
+}
+
+struct PuzzleRef<'a> {
+    key: PuzzleKey,
+    puzzle: &'a ConnectionPuzzle,
+}
+
+impl<'a> PuzzleRef<'a> {
+    fn at_end(&self) -> bool {
+        self.key.word_index == 3 && self.key.color == Color::Green
+    }
+
+    fn new(puzzle: &'a ConnectionPuzzle) -> Self {
+        Self {
+            key: PuzzleKey::default(),
+            puzzle,
+        }
+    }
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+pub struct PuzzleKey {
+    pub color: Color,
+    pub word_index: usize,
+}
+
+impl PuzzleKey {
+    fn new(color: Color, word_index: usize) -> Self {
+        Self { color, word_index }
+    }
+}
+
+impl Default for PuzzleKey {
+    fn default() -> Self {
+        Self {
+            color: Color::Yellow,
+            word_index: 0,
+        }
+    }
+}
+
+pub enum CardState {
+    Selected,
+    Normal,
+    Matched,
+}
+
+pub struct Card<'a> {
+    pub color: Color,
+    pub word: &'a str,
+    pub theme: &'a str,
+    pub state: CardState,
+}
+
+impl<'a> Card<'a> {
+    pub fn from_key(key: &PuzzleKey, board: &'a Board) -> Self {
+        let (word, theme) = match key.color {
+            Color::Yellow => {
+                let set = board.puzzle.yellow();
+                (&set.words[key.word_index], &set.theme)
+            }
+            Color::Blue => {
+                let set = board.puzzle.blue();
+                (&set.words[key.word_index], &set.theme)
+            }
+            Color::Green => {
+                let set = board.puzzle.green();
+                (&set.words[key.word_index], &set.theme)
+            }
+            Color::Purple => {
+                let set = board.puzzle.purple();
+                (&set.words[key.word_index], &set.theme)
+            }
+        };
+
+        let state = if board.selection.contains(key) {
+            CardState::Selected
+        } else if board.matched_cards.contains(&key.color) {
+            CardState::Matched
+        } else {
+            CardState::Normal
+        };
+
+        Self {
+            color: key.color,
+            word,
+            theme,
+            state,
+        }
+    }
+
+    pub fn class_name(&self) -> &str {
+        match self.state {
+            CardState::Normal => "card",
+            CardState::Selected => "selected",
+            CardState::Matched => match self.color {
+                Color::Yellow => "matched_yellow",
+                Color::Green => "matched_green",
+                Color::Blue => "matched_blue",
+                Color::Purple => "matched_purple",
+            },
+        }
+    }
+}
+
+impl Default for ConnectionPuzzle {
+    fn default() -> Self {
+        let purple = ("Types of Rooms", ["war", "bed", "situation", "clean"]);
+        let green = (
+            "Domains of Greek Gods",
+            ["victory", "ocean", "thunder", "music"],
+        );
+        let yellow = ("Minecraft Cake Recipe", ["wheat", "milk", "eggs", "sugar"]);
+        let blue = ("noble gasses", ["helium", "argon", "krypton", "neon"]);
+
+        Self::new(yellow, blue, purple, green)
+    }
+}

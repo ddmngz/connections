@@ -1,0 +1,25 @@
+.libre-franklin-<uniquifier> {
+  font-family: "Libre Franklin", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: <weight>;
+  font-style: normal;
+}
+
+
+.p1 {
+  font-family: "Times New Roman", Times, serif;
+}
+
+:root{
+--connections-light-beige: #efefe6;
+  --connections-beige: ##cfcfbf;
+  --connections-dark-beige: ##a39f95;
+  --connections-darker-beige: #656458;
+  --connections-extra-dark-beige: #5a594e;
+  --connections-yellow: #f9df6d;
+  --connections-maroon: #ba81c5;
+  --connections-blue: #b0c4ef;
+  --connections-green: #a0c35a;
+  --connections-dark-purple: #861cab;
+  --sb-dark-gray: #38383f;
+  }
