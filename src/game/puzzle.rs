@@ -5,11 +5,23 @@ use super::color::Green;
 use super::color::Purple;
 use super::color::Yellow;
 use super::Board;
+use serde::{Deserialize, Serialize};
 use std::array;
+use std::io::Cursor;
 use std::marker::PhantomData;
+
+use base64::{engine::general_purpose::URL_SAFE, Engine as _};
+use flate2::write::GzEncoder;
+
+use flate2::write::GzDecoder;
+
+use flate2::Compression;
+use std::io::Write;
+
 #[allow(unused_imports)]
 use web_sys::console;
 
+#[derive(Serialize, Deserialize)]
 pub struct ConnectionPuzzle {
     yellow: ConnectionSet<Yellow>,
     blue: ConnectionSet<Blue>,
@@ -17,6 +29,7 @@ pub struct ConnectionPuzzle {
     green: ConnectionSet<Green>,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct ConnectionSet<Color: AsColor> {
     theme: String,
     words: [String; 4],
@@ -66,6 +79,30 @@ impl ConnectionPuzzle {
         }
     }
 
+    pub fn encode(&self) -> String {
+        let mut cbor_bytes: Vec<u8> = Vec::new();
+        ciborium::into_writer(&self, &mut cbor_bytes).unwrap();
+        let mut encoder = GzEncoder::new(Vec::new(), Compression::best());
+        encoder.write_all(&cbor_bytes).unwrap();
+        let compressed_cbor = encoder.finish().unwrap();
+        URL_SAFE.encode(&compressed_cbor)
+    }
+
+    pub fn decode(code: &str) -> Result<Self, TranscodingError> {
+        let compressed_cbor = URL_SAFE
+            .decode(code)
+            .map_err(|_| TranscodingError::Base64)?;
+
+        let mut cbor_bytes = Vec::new();
+        let mut decoder = GzDecoder::new(&mut cbor_bytes);
+        decoder
+            .write_all(&compressed_cbor[..])
+            .map_err(|_| TranscodingError::Gzip)?;
+
+        let cbor_bytes = decoder.finish().unwrap();
+        ciborium::from_reader(&cbor_bytes[..]).map_err(|_| TranscodingError::Cbor)
+    }
+
     pub fn all_keys(&self) -> [PuzzleKey; 16] {
         array::from_fn(|index| self.nth(index))
     }
@@ -95,6 +132,13 @@ impl ConnectionPuzzle {
     }
 }
 
+#[derive(Debug)]
+pub enum TranscodingError {
+    Base64,
+    Gzip,
+    Cbor,
+}
+
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct PuzzleKey {
     pub color: Color,
@@ -116,6 +160,7 @@ impl Default for PuzzleKey {
     }
 }
 
+#[derive(PartialEq, Eq)]
 pub enum CardState {
     Selected,
     Normal,

@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 # NoCacheHTTPServer.py
 
 import http.server

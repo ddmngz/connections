@@ -32,7 +32,6 @@
 }
 
 .board {
-
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: repeat(4, 1fr);
@@ -52,7 +51,6 @@
 }
 
 .matched-set {
-
   grid-column-end: span 4;
   border-radius: 6px;
   padding: 20px;
@@ -66,9 +64,39 @@
   z-index: -1; /* Specify a stack order in case you're using a different order for other elements */
   position:sticky;
   transition: background-color .25s, color .25s;
+    height: 40px;
 }
 
+.card {
+    height: 40px;
+    line-height:40px;
+  border-radius: 6px;
+  background-color: var(--connections-light-beige);
+  padding: 20px;
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-family: "Libre Franklin", sans-serif;
+  font-style: normal; 
+  z-index: -1; /* Specify a stack order in case you're using a different order for other elements */
+  position:sticky;
+  transition: background-color .25s, color .25s;
+}
 
+.card.shuffling{
+    color: rgba(0,0,0,0)
+}
+
+.card.selected.shuffling {
+  color:rgba(0,0,0,0);
+}
+
+.card.selected {
+  background-color: var(--connections-darker-beige);
+  color:white;
+}
 
 #yellow{
     background-color: var(--connections-yellow);
@@ -84,59 +112,6 @@
 
 #blue{
     background-color: var(--connections-blue);
-}
-
-.card {
-
-  border-radius: 6px;
-  background-color: rgb(239, 239, 230);
-  padding: 20px;
-  font-size: 20px;
-  font-weight: 700;
-  text-align: center;
-  cursor: pointer;
-  text-transform: uppercase;
-  font-family: "Libre Franklin", sans-serif;
-  font-style: normal; 
-  z-index: -1; /* Specify a stack order in case you're using a different order for other elements */
-  position:sticky;
-  transition: background-color .25s, color .25s;
-}
-
-.card:selected {
-  border-radius: 6px;
-  background-color: rgb(239, 239, 230);
-  color:rgba()
-  padding: 20px;
-  font-size: 20px;
-  font-weight: 700;
-  text-align: center;
-  cursor: default;
-  text-transform: uppercase;
-  font-family: "Libre Franklin", sans-serif;
-  font-style: normal; 
-  z-index: -1; /* Specify a stack order in case you're using a different order for other elements */
-  position:sticky;
-  transition: background-color .25s, color .25s;
-  background-color: var(--connections-extra-dark-beige);
-}
-
-.card:yellow {
-  background-color: var(--connections-yellow);
-}
-
-.card:purple {
-  background-color: var(--connections-purple);
-}
-
-.card:blue {
-  background-color: var(--connections-blue);
-  color:#ffffff;
-}
-
-.card:green {
-  background-color: var(--connections-green);
-  color:#ffffff;
 }
 
 
@@ -264,6 +239,7 @@
   --sb-dark-gray: #38383f;
   font-size: 20px;
   font-weight: 700;
+  color:black;
     font-family: "Libre Franklin", sans-serif;
   font-style: normal;
   flex-shrink:0;
@@ -272,4 +248,79 @@
   user-select: none; /* Standard syntax */
 
 
+}
+
+.container{
+    display:flex;
+    position: fixed; /* Sit on top of the page content */
+    flex-direction: column;
+    justify-content:space-evenly;
+    width: 100%; /* Full width (cover the whole page) */
+    height: 100%; /* Full height (cover the whole page) */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom:0;
+    z-index: -0; /* Specify a stack order in case you're using a different order for other elements */
+}
+
+
+
+
+
+.overlay{
+  position: fixed; /* Stay in place */
+  z-index: 2; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  margin: auto;
+  padding:10px 18px;
+  text-align: center;
+  min-height: 100%;
+  background-color:white;
+  font-size:medium;  
+  border-radius: 6px;
+  font-weight:600;
+  opacity:.6;
+  transition: display .25s;
+}
+
+.overlay-container{
+  display:none;
+  flex-direction:column;
+  justify-content:space-around;
+  position: fixed; /* Stay in place */
+  z-index: 2; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  animation: display .25s;
+}
+
+.overlay-container.enabled{
+    display:flex;
+}
+
+
+.pop-up{
+  display:none;
+  z-index: 3; /* Sit on top */
+   width: max-content;
+  margin: auto;
+  padding:10px 18px;
+  text-align: center;
+  background-color:black;
+  color:white;
+  font-size:medium;  
+  border-radius: 6px;
+  font-weight:600;
+  transition: display .25s;
+}
+
+.pop-up.enabled{
+    display:block;
 }

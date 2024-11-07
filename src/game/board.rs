@@ -68,9 +68,9 @@ impl Board {
     }
 
     fn move_matched(&mut self) {
-        console::log_1(&"move matched start".into());
         //start..end.iter();
         let mut top_of_board = self.matched_cards.len() * 4;
+        console::log_1(&format!("moving selection into index {top_of_board}").into());
         for key in &self.selection {
             let index = self.order.iter().position(|x| x == key).unwrap();
             self.order.swap(top_of_board, index);

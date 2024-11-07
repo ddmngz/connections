@@ -10,6 +10,7 @@ use puzzle::Card;
 use puzzle::ConnectionPuzzle;
 use puzzle::PuzzleKey;
 use std::collections::HashSet;
+use std::io::prelude::*;
 use wasm_bindgen::prelude::*;
 #[allow(unused_imports)]
 use web_sys::console;
@@ -29,20 +30,16 @@ pub fn start_state() -> GameState {
     GameState::default()
 }
 
-// TODO:
-// use dom render card
-// try create color set
-// animate
-
-// one away
-// already guessed
-// you win
-// you lost
-
 #[wasm_bindgen]
 impl GameState {
+    pub fn puzzle_code(&self) {
+        let string = self.board.puzzle.encode();
+        console::log_1(&string.into());
+    }
+
     pub fn render_cards(&mut self) {
-        self.dom.render_cards(&self.board);
+        self.dom
+            .render_cards(&self.board, self.board.matched_cards.len() * 4);
     }
 
     fn default() -> Self {
@@ -56,7 +53,7 @@ impl GameState {
         let Ok(state) = self.board.select(card_id) else {
             return false;
         };
-        self.dom.rerender_by_handle(card, state);
+        self.dom.toggle_select(&card);
         //self.dom.rerender_selected_card(index, state);
 
         if self.board.selection.is_empty() {
@@ -92,13 +89,13 @@ impl GameState {
 
         let almost_lost = self.mistakes == 3;
 
-        //console::log_1(&format!("check selection").into());
         match self.board.check_selection() {
             Ok(color) => {
                 self.board.matched_cards.insert(color);
                 self.successes += 1;
                 self.dom.disable_deselect();
-                self.dom.render_cards(&self.board);
+                self.dom
+                    .render_cards(&self.board, (self.board.matched_cards.len() - 1) * 4);
                 let (theme, words) = self.match_set_strings(color);
                 self.dom.render_match(color, theme, &words);
                 //self.dom.render_cards(&self.board);
@@ -132,11 +129,13 @@ impl GameState {
     }
     pub fn shuffle(&mut self) {
         self.board.shuffle();
+        self.render_cards();
     }
 
     pub fn clear_selection(&mut self) {
         self.board.clear_selection();
-        self.dom.render_cards(&self.board);
+        //self.render_cards();
+        self.dom.clear_selections();
         self.dom.disable_deselect();
         self.dom.disable_submit();
     }
@@ -169,6 +168,11 @@ impl GameState {
             prev_attempts,
             dom,
         }
+    }
+
+    pub fn from_code(code: String) -> Self {
+        let puzzle = ConnectionPuzzle::decode(&code).unwrap();
+        Self::new(puzzle)
     }
 
     pub fn get_card(&self, index: usize) -> Card {

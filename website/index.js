@@ -1,13 +1,11 @@
-import init, {GameState, start_state} from './pkg/nyt_connections.js';
+import init, {GameState, start_state, SelectionSuccess, GameFailiure} from '/pkg/nyt_connections.js';
 
 
 
 async function run() {
     const module = await WebAssembly.compileStreaming(fetch("./pkg/nyt_connections_bg.wasm"));
 
-    console.log(module);
     await init(module);
-    console.log("initialized");
 
     //const module = WebAssembly.compileStreaming(fetch('./pkg/nyt_connections_bg.wasm'));
     //await init();
@@ -31,7 +29,6 @@ function main(){
     function shake_selection(){
         const cards = Array.from(document.getElementsByClassName("card"));
         const indices = Array.from(state.get_selection_indices());
-        console.log("selection indices: ", indices);
         indices.forEach(async (i) => {
             cards[i].style.animation = "shake linear .25s";
 	    await new Promise(r => setTimeout(r, 250));
@@ -42,7 +39,6 @@ function main(){
     async function jump_selection() {
         const cards = Array.from(document.getElementsByClassName("card"));
         const indices = Array.from(state.get_selection_indices());
-        console.log("selection indices: ", indices);
         for(const i of indices){
             cards[i].style.animation = "jump linear .25s";
 	    await new Promise(r => setTimeout(r, 250));
@@ -74,36 +70,42 @@ function main(){
         element.style.opacity = 0;
     }
 
+    function display_won(){
+        document.getElementById("overlay-container").classList.add("enabled");
+        document.getElementById("win").classList.add("enabled");
+    }
+
+    function display_lost(){
+        document.getElementById("overlay-container").classList.add("enabled");
+        document.getElementById("lose").classList.add("enabled");
+    }
+
     const init_buttons = () => {
         const submit = document.getElementById("submit");
         submit.addEventListener("click", async () => {
             try{
                 await jump_selection();
-                state.check_selection();
-                cards.forEach(renderCard);
-                console.log("match")
+                if(state.check_selection() == SelectionSuccess.Won){
+                    display_won();
+                }
             }catch (exceptionVar){
                 switch (exceptionVar){
-                    case 0: // MISMATCH
+                    case GameFailiure.Mismatch: // MISMATCH
                         shake_selection();
-                        console.log("mismatch");
                         break;
-                    case 1: // NOT ENOUGH 
+                    case GameFailiure.NotEnough: // NOT ENOUGH 
                         shake_selection();
-                        console.log("not enough selected");
                         break;
-                    case 2: //One Away
+                    case GameFailiure.OneAway: //One Away
                         shake_selection();
                         one_away();
-                        console.log("one away...");
                         break;
-                    case 3: //lost
+                    case GameFailiure.Lost:
                         shake_selection();
-                        console.log("you lose!");
+                        display_lost();
                         break;
-                    case 4:
+                    case GameFailiure.AlreadyGuessed:
                         already_guessed();
-                        console.log("already tried");
 
                 }
             }
@@ -112,11 +114,16 @@ function main(){
         const shuffle = document.getElementById("shuffle");
         shuffle.addEventListener("click", async () => {
 	    const elems = Array.from(document.getElementsByClassName("card"));
-	    elems.forEach((elem) => {elem.style["color"] = "rgba(0,0,0,0)"}); 
-	    await new Promise(r => setTimeout(r, 150));
+	    elems.forEach((elem) => {
+                elem.classList.toggle("shuffling")
+                elem.classList.remove("selected")
+            });
+
+	    await new Promise(r => setTimeout(r, 175));
             state.shuffle();
-            state.render_cards();
-            //cards.forEach(renderCard);
+	    elems.forEach((elem) => {
+                elem.classList.toggle("shuffling")
+            });
         });
 
         const deselect = document.getElementById("deselect");
@@ -128,13 +135,13 @@ function main(){
     }
 
 
-    console.log("main");
     const game_board = document.getElementById("board");
     const cards = Array.from(game_board.children);
     const state = start_state();
     cards.forEach(initializeCards);
     state.render_cards();
     init_buttons();
+    state.puzzle_code();
 }
 
 await run();

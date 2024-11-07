@@ -2,15 +2,16 @@
 <html>
   <head>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
-    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="website/index.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@100..900&display=swap" rel="stylesheet">
-    <script type="module" src="index.js"></script>
+    <script type="module" src="website/index.js"></script>
   </head>
   <body>
 
 
+<div class="container" >  
 <div class="game" >  
 
   <div class="board" id="board">
@@ -60,6 +61,17 @@
 
   <br>
   </div>
+  </div>
+    <div class="pop-up">One Away</div>
+    <div class="pop-up">Already Guessed!</div>
+  <div class="overlay-container" id="overlay-container">
+        <div class="pop-up" id="win">You Win!</div>
+        <div class="pop-up" id="lose">Better luck next time!</div>
+
+        <div class="overlay">
+    </div>
+  </div>
+
   </body>
 </html>
 

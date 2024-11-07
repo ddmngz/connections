@@ -2,6 +2,7 @@ use super::board::Board;
 use super::board::SelectState;
 use super::color::Color;
 use super::puzzle::Card;
+use super::puzzle::CardState;
 use std::ops::Range;
 
 use wasm_bindgen::JsValue;
@@ -15,6 +16,7 @@ pub struct Dom {
     document: Document,
     cards: HtmlCollection,
     dots: HtmlCollection,
+    selection: HtmlCollection,
     submit_button: Element,
     deselect_button: Element,
 }
@@ -27,45 +29,25 @@ impl Dom {
         let dots = document.get_elements_by_class_name("dot");
         let submit_button = document.get_element_by_id("submit").unwrap();
         let deselect_button = document.get_element_by_id("deselect").unwrap();
+        let selection = document.get_elements_by_class_name("selected");
 
         Self {
             document,
             cards,
             dots,
+            selection,
             submit_button,
             deselect_button,
         }
     }
 
-    pub fn render_cards(&mut self, board: &Board) {
+    pub fn render_cards(&mut self, board: &Board, offset: usize) {
         self.cards = self.document.get_elements_by_class_name("card");
         let card_iter = CollectionVec::new(&self.cards).into_iter().enumerate();
-        console::log_1(&format!("{:?} ", self.cards).into());
         for (index, div) in card_iter {
-            console::log_1(&format!("index {index} ").into());
-            let card = board.get_card(index);
-            let div = unsafe { Self::elem_to_div_elem(div) };
+            let card = board.get_card(index + offset);
             self.render_card(div, card);
         }
-    }
-
-    unsafe fn elem_to_div_elem(elem: Element) -> HtmlDivElement {
-        let handle: JsValue = elem.into();
-        HtmlDivElement::from(handle)
-    }
-
-    pub fn rerender_by_handle(&self, card_div: HtmlDivElement, state: SelectState) {
-        let card_style = card_div.style();
-        let (text_color, background_color) = match state {
-            SelectState::Normal => ("black", "var(--connections-light-beige)"),
-            SelectState::Selected => ("white", "var(--connections-darker-beige)"),
-        };
-        card_style
-            .set_property("color", text_color)
-            .expect("error setting color");
-        card_style
-            .set_property("background-color", background_color)
-            .expect("error setting bg color");
     }
 
     pub fn enable_submit(&self) {
@@ -84,18 +66,33 @@ impl Dom {
         set_button(&self.deselect_button, ButtonState::Disable);
     }
 
-    pub fn render_card(&self, card_div: HtmlDivElement, card: Card) {
+    pub fn toggle_select(&self, card_div: &Element) {
+        card_div
+            .class_list()
+            .toggle("selected")
+            .expect("Error selecting classlist");
+    }
+
+    pub fn render_card(&self, card_div: Element, card: Card) {
+        if card.state == CardState::Normal {
+            card_div
+                .class_list()
+                .remove_1("selected")
+                .expect("removing selected");
+        } else {
+            card_div
+                .class_list()
+                .add_1("selected")
+                .expect("removing selected");
+        }
         // fix this later
         card_div.set_text_content(Some(card.word));
-        let card_style = card_div.style();
-        let text_color = card.text_color();
-        let background_color = card.background_color();
-        card_style
-            .set_property("color", text_color)
-            .expect("error setting color");
-        card_style
-            .set_property("background-color", background_color)
-            .expect("error setting bg color");
+    }
+
+    pub fn clear_selections(&self) {
+        for selection in CollectionVec::new(&self.selection) {
+            self.toggle_select(&selection);
+        }
     }
 
     pub fn deactivate_dot(&self) {
