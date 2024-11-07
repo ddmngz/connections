@@ -1,6 +1,4 @@
 mod game;
-use game::GameState;
-use std::f64;
 use wasm_bindgen::prelude::*;
 //use web_sys::console;
 

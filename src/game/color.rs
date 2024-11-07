@@ -1,5 +1,3 @@
-use std::fmt;
-
 pub struct Yellow {}
 pub struct Blue {}
 pub struct Purple {}

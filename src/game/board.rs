@@ -6,6 +6,8 @@ use super::color::Color;
 use super::puzzle::Card;
 use super::puzzle::PuzzleKey;
 use super::ConnectionPuzzle;
+#[allow(unused_imports)]
+use web_sys::console;
 
 pub struct Board {
     pub puzzle: ConnectionPuzzle,
@@ -13,14 +15,13 @@ pub struct Board {
     // the cards that are matched
     // ideally this would be in sets of 4
     pub matched_cards: HashSet<Color>,
-    order: [PuzzleKey; 16],
+    pub order: [PuzzleKey; 16],
     rng: ThreadRng,
 }
 
 pub enum SelectState {
     Selected,
     Normal,
-    Matched,
 }
 
 pub enum SelectionFailiure {
@@ -30,12 +31,12 @@ pub enum SelectionFailiure {
 }
 
 impl Board {
-    pub fn select(&mut self, index: usize) -> Result<(), ()> {
+    pub fn select(&mut self, index: usize) -> Result<SelectState, ()> {
         let key = self.get_key(index);
         // if it's selected already, get rid of it
         if self.selection.contains(&key) {
             self.selection.remove(&key);
-            Ok(())
+            Ok(SelectState::Normal)
         }
         // ugly elif, if it's not matched then it's normal, in which case it should be inserted if
         // and only if the selection hashset isn't full
@@ -44,7 +45,7 @@ impl Board {
                 Err(())
             } else {
                 self.selection.insert(key);
-                Ok(())
+                Ok(SelectState::Selected)
             }
         } else {
             Err(())
@@ -67,14 +68,15 @@ impl Board {
     }
 
     fn move_matched(&mut self) {
-        let mut matched_position = self.matched_cards.len() * 4;
+        console::log_1(&"move matched start".into());
         //start..end.iter();
+        let mut top_of_board = self.matched_cards.len() * 4;
         for key in &self.selection {
             let index = self.order.iter().position(|x| x == key).unwrap();
-            self.order.swap(index, matched_position);
-            matched_position += 1;
+            self.order.swap(top_of_board, index);
+            top_of_board += 1;
         }
-        //for i in start..end {}
+        console::log_1(&"move matched done".into());
     }
 
     pub fn check_selection(&mut self) -> Result<Color, SelectionFailiure> {
@@ -82,9 +84,8 @@ impl Board {
             Ok(color) => {
                 self.move_matched();
                 self.matched_cards.insert(color);
+                console::log_1(&format!("length: {}", self.matched_cards.len()).into());
                 self.selection.clear();
-                //do some stuff
-                //and then
                 Ok(color)
             }
             e => e,
@@ -93,14 +94,14 @@ impl Board {
 
     pub fn shuffle(&mut self) {
         let starting_point = self.matched_cards.len() * 4;
-        self.order[starting_point..].shuffle(&mut rand::thread_rng());
+        self.order[starting_point..].shuffle(&mut self.rng);
     }
 
     pub fn new(puzzle: ConnectionPuzzle) -> Self {
         let selection = HashSet::new();
         let matched_cards = HashSet::new();
-        let mut order = puzzle.all_keys();
         let mut rng = rand::thread_rng();
+        let mut order = puzzle.all_keys();
         order.shuffle(&mut rng);
         Self {
             puzzle,
@@ -122,5 +123,14 @@ impl Board {
 
     pub fn clear_selection(&mut self) {
         self.selection.clear();
+    }
+
+    pub fn selection(&mut self) -> Vec<Card> {
+        let mut selection = Vec::new();
+        let iter = self.selection.iter();
+        for key in iter {
+            selection.push(Card::from_key(key, self))
+        }
+        selection
     }
 }

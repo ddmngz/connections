@@ -7,7 +7,7 @@ use super::color::Yellow;
 use super::Board;
 use std::array;
 use std::marker::PhantomData;
-use wasm_bindgen::prelude::*;
+#[allow(unused_imports)]
 use web_sys::console;
 
 pub struct ConnectionPuzzle {
@@ -17,7 +17,7 @@ pub struct ConnectionPuzzle {
     green: ConnectionSet<Green>,
 }
 
-struct ConnectionSet<Color: AsColor> {
+pub struct ConnectionSet<Color: AsColor> {
     theme: String,
     words: [String; 4],
     color: PhantomData<Color>,
@@ -26,12 +26,23 @@ struct ConnectionSet<Color: AsColor> {
 impl<C: AsColor> ConnectionSet<C> {
     fn new(theme: &str, words: [&str; 4]) -> Self {
         let words: [String; 4] = array::from_fn(|index| String::from(words[index]));
-        let color = PhantomData::default();
+        let color = PhantomData;
         Self {
             theme: theme.into(),
             words,
             color,
         }
+    }
+
+    pub fn theme(&self) -> &str {
+        &self.theme
+    }
+
+    pub fn words(&self) -> String {
+        format!(
+            "{}, {}, {}, {}",
+            self.words[0], self.words[1], self.words[2], self.words[3]
+        )
     }
 }
 
@@ -67,42 +78,20 @@ impl ConnectionPuzzle {
         PuzzleKey::new(color, index % 4)
     }
 
-    fn iter(&self) -> PuzzleRef {
-        PuzzleRef::new(self)
-    }
-
-    const fn yellow(&self) -> &ConnectionSet<Yellow> {
+    pub const fn yellow(&self) -> &ConnectionSet<Yellow> {
         &self.yellow
     }
 
-    const fn blue(&self) -> &ConnectionSet<Blue> {
+    pub const fn blue(&self) -> &ConnectionSet<Blue> {
         &self.blue
     }
 
-    const fn purple(&self) -> &ConnectionSet<Purple> {
+    pub const fn purple(&self) -> &ConnectionSet<Purple> {
         &self.purple
     }
 
-    const fn green(&self) -> &ConnectionSet<Green> {
+    pub const fn green(&self) -> &ConnectionSet<Green> {
         &self.green
-    }
-}
-
-struct PuzzleRef<'a> {
-    key: PuzzleKey,
-    puzzle: &'a ConnectionPuzzle,
-}
-
-impl<'a> PuzzleRef<'a> {
-    fn at_end(&self) -> bool {
-        self.key.word_index == 3 && self.key.color == Color::Green
-    }
-
-    fn new(puzzle: &'a ConnectionPuzzle) -> Self {
-        Self {
-            key: PuzzleKey::default(),
-            puzzle,
-        }
     }
 }
 
@@ -177,6 +166,27 @@ impl<'a> Card<'a> {
         }
     }
 
+    pub fn background_color(&self) -> &str {
+        match self.state {
+            CardState::Normal => "var(--connections-light-beige)",
+            CardState::Selected => "var(--connections-darker-beige)",
+            //panic!("tried to render matched card")
+            CardState::Matched => match self.color {
+                Color::Yellow => "var(--connections-yellow)",
+                Color::Green => "var(--connections-green)",
+                Color::Blue => "var(--connections-blue)",
+                Color::Purple => "var(--connections-maroon)",
+            },
+        }
+    }
+
+    pub fn text_color(&self) -> &str {
+        match self.state {
+            CardState::Selected => "white",
+            _ => "black",
+        }
+    }
+
     pub fn class_name(&self) -> &str {
         match self.state {
             CardState::Normal => "card",
@@ -193,7 +203,7 @@ impl<'a> Card<'a> {
 
 impl Default for ConnectionPuzzle {
     fn default() -> Self {
-        let purple = ("Types of Rooms", ["war", "bed", "situation", "clean"]);
+        let purple = ("___Room", ["war", "bed", "situation", "clean"]);
         let green = (
             "Domains of Greek Gods",
             ["victory", "ocean", "thunder", "music"],
