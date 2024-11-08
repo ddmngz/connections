@@ -50,6 +50,43 @@
   z-index: 1; /* Specify a stack order in case you're using a different order for other elements */
 }
 
+input[type=text].theme{
+    background-color:inherit;
+    border:none;
+    font:inherit;
+    text-transform: uppercase;
+    font-weight: 700;
+    display:inline;
+}
+
+.word-set{
+    display:flex;
+    flex-grow:0;
+    flex-shrink:1;
+    justify:center;
+}
+
+input[type=text]{
+    text-align:center;
+    width: content-max;
+    background-color:inherit;
+    border:none;
+    font:inherit;
+    text-transform: uppercase;
+
+    width:50%;
+    display:inline;
+}
+
+.matched-set.blue {
+    display:inline-block;
+    background-color: var(--connections-blue);
+}
+
+.word{
+    display:inline;
+}
+
 .matched-set {
   grid-column-end: span 4;
   border-radius: 6px;
@@ -68,8 +105,8 @@
 }
 
 .card {
-    height: 40px;
-    line-height:40px;
+  height: 40px;
+  line-height:40px;
   border-radius: 6px;
   background-color: var(--connections-light-beige);
   padding: 20px;
@@ -324,3 +361,8 @@
 .pop-up.enabled{
     display:block;
 }
+
+a{
+  text-decoration: none;
+  color:inherit;
+  }

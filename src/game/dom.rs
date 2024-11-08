@@ -124,16 +124,6 @@ impl Dom {
         collection[0].remove();
         collection[1].remove();
         collection[2].remove();
-
-        //collection[0].set_text_content(Some("0"));
-        //collection[1].set_text_content(Some("1"));
-        //collection[2].set_text_content(Some("2"));
-        //collection[3].set_text_content(Some("3"));
-        /*
-        collection[0].remove();
-        collection[1].remove();
-        collection[2].remove();
-        */
         let final_div = &collection[3];
         let color_set = self.create_color_set(color, theme, words);
         final_div
