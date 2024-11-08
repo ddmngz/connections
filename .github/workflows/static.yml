@@ -32,12 +32,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: wasm
-        runs: cargo install wasm-pack
+        run: cargo install wasm-pack
       
       - name: Checkout
         uses: actions/checkout@v4
       - name: build
-        runs: wasm-pack build --target=web
+        run: wasm-pack build --target=web
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
