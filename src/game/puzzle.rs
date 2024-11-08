@@ -1,3 +1,5 @@
+use crate::wasm_bindgen;
+
 use super::color::AsColor;
 use super::color::Blue;
 use super::color::Color;
@@ -7,7 +9,6 @@ use super::color::Yellow;
 use super::Board;
 use serde::{Deserialize, Serialize};
 use std::array;
-use std::io::Cursor;
 use std::marker::PhantomData;
 
 use base64::{engine::general_purpose::URL_SAFE, Engine as _};
@@ -132,6 +133,7 @@ impl ConnectionPuzzle {
     }
 }
 
+#[wasm_bindgen]
 #[derive(Debug)]
 pub enum TranscodingError {
     Base64,

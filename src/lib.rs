@@ -1,3 +1,4 @@
+mod form;
 mod game;
 use wasm_bindgen::prelude::*;
 //use web_sys::console;

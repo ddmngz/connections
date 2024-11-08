@@ -1,6 +1,4 @@
-import init, {GameState, start_state, SelectionSuccess, GameFailiure} from '/pkg/nyt_connections.js';
-
-
+import init, {GameState, start_state, SelectionSuccess, GameFailiure, TranscodingError} from '/pkg/nyt_connections.js';
 
 async function run() {
     const module = await WebAssembly.compileStreaming(fetch("./pkg/nyt_connections_bg.wasm"));
@@ -14,10 +12,7 @@ async function run() {
 
 
 
-
-function main(){
-
-
+function main(state){
     const initializeCards = (card, card_key) => {
         card.addEventListener("click", () => {
             state.select(card,card_key)
@@ -137,16 +132,56 @@ function main(){
 
     const game_board = document.getElementById("board");
     const cards = Array.from(game_board.children);
-    const state = start_state();
     cards.forEach(initializeCards);
     state.render_cards();
     init_buttons();
     state.puzzle_code();
+
 }
+
+function default_main(){
+    const state = start_state();
+    main(state)
+}
+
+function main_with_code(code){
+    try{
+        let state = GameState.from_code(code);
+        main(state)
+    }catch(e){
+        switch (e){
+            case TranscodingError.Base64:
+                console.log("base64");
+                break;
+            case TranscodingError.Gzip:
+                console.log("gzip");
+                break;
+            case TranscodingError.Cbor:
+                console.log("cbor");
+                break;
+        }
+        console.log("error",e);
+    }
+}
+
+
+function entry_point(){
+    let url = new URL(document.URL);
+    if(url.hash == ""){
+        default_main();
+    }else{
+        console.log(url.hash);
+        main_with_code(url.hash.slice(1));
+    }
+
+}
+
+
 
 await run();
 //console.log("calling main");
-main();
+//default_main();
+entry_point();
 
 
 

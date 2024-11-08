@@ -1,5 +1,5 @@
 mod board;
-mod color;
+pub mod color;
 mod dom;
 mod puzzle;
 use board::Board;
@@ -7,8 +7,9 @@ use board::SelectionFailiure;
 use color::Color;
 use dom::Dom;
 use puzzle::Card;
-use puzzle::ConnectionPuzzle;
+pub use puzzle::ConnectionPuzzle;
 use puzzle::PuzzleKey;
+use puzzle::TranscodingError;
 use std::collections::HashSet;
 use std::io::prelude::*;
 use wasm_bindgen::prelude::*;
@@ -154,6 +155,11 @@ impl GameState {
         }
         elems.into_boxed_slice()
     }
+
+    pub fn from_code(code: String) -> Result<Self, TranscodingError> {
+        let puzzle = ConnectionPuzzle::decode(&code)?;
+        Ok(Self::new(puzzle))
+    }
 }
 
 impl GameState {
@@ -168,11 +174,6 @@ impl GameState {
             prev_attempts,
             dom,
         }
-    }
-
-    pub fn from_code(code: String) -> Self {
-        let puzzle = ConnectionPuzzle::decode(&code).unwrap();
-        Self::new(puzzle)
     }
 
     pub fn get_card(&self, index: usize) -> Card {

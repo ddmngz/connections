@@ -22,6 +22,23 @@ impl AsRef<str> for Color {
     }
 }
 
+#[derive(Default)]
+pub struct ColorIter(Option<Color>);
+
+impl Iterator for ColorIter {
+    type Item = Color;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.0 {
+            Some(Color::Green) => None,
+            None => Some(Color::Yellow),
+            Some(Color::Yellow) => Some(Color::Blue),
+            Some(Color::Blue) => Some(Color::Purple),
+            Some(Color::Purple) => Some(Color::Green),
+        }
+    }
+}
+
 impl Color {
     pub const fn from_int(int: u8) -> Self {
         match int {
