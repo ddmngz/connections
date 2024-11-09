@@ -1,13 +1,17 @@
 import init, {GameState, start_state, SelectionSuccess, GameFailiure, TranscodingError} from './pkg/nyt_connections.js';
 
 async function run() {
-	/*
-    const module = await WebAssembly.compileStreaming(fetch("./connections-builder/pkg/nyt_connections_bg.wasm", {    headers: {
-      "Content-Type": "application/wasm",
-    },}));
-    */
+    const url = URL("https://ddmngz.github.io/connections-builder/pkg/nyt_connections_bg.wasm");
+    const FetchOptions = {
+        headers:{
+            "Content-Type": "application/wasm",
+        }
+    };
+    const wasm = fetch(url, FetchOptions);
 
-    await init();
+    const module = await WebAssembly.compileStreaming(wasm);
+
+    await init(module);
 
     //const module = WebAssembly.compileStreaming(fetch('./pkg/nyt_connections_bg.wasm'));
     //await init();
