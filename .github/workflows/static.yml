@@ -32,6 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: wasm
+        run: cd wasm
         run: cargo install wasm-pack
       
       - name: Checkout
