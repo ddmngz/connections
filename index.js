@@ -15,7 +15,9 @@ function main(){
     let url = new URL(document.URL);
     if(url.searchParams.get("game") != null){
         let game_code = url.search;
-        const game_url = new URL("./game.html",document.URL);
+        console.log(url)
+        const game_url = new URL("./game.html",url);
+        console.log(game_url)
         game_url.search = game_code;
         self.window.location.assign(game_url);
     }else{
