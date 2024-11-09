@@ -1,7 +1,7 @@
 import init, {GameState, start_state, SelectionSuccess, GameFailiure, TranscodingError} from '/pkg/nyt_connections.js';
 
 async function run() {
-    const module = await WebAssembly.compileStreaming(fetch("./pkg/nyt_connections_bg.wasm"));
+    const module = await WebAssembly.compileStreaming(fetch("pkg/nyt_connections_bg.wasm"));
 
     await init(module);
 
@@ -68,11 +68,20 @@ function main(state){
     function display_won(){
         document.getElementById("overlay-container").classList.add("enabled");
         document.getElementById("win").classList.add("enabled");
+        document.getElementById("again").classList.add("enabled");
     }
 
     function display_lost(){
         document.getElementById("overlay-container").classList.add("enabled");
         document.getElementById("lose").classList.add("enabled");
+        document.getElementById("again").classList.add("enabled");
+    }
+
+    function hide_overlay(){
+        document.getElementById("overlay-container").classList.remove("enabled");
+        document.getElementById("win").classList.remove("enabled");
+        document.getElementById("again").classList.remove("enabled");
+
     }
 
     const init_buttons = () => {
@@ -127,6 +136,11 @@ function main(state){
             state.clear_selection();
         });
 
+        const try_again = document.getElementById("again")
+        try_again.addEventListener("click", () =>{
+            state.start_over();
+            hide_overlay();
+        });
     }
 
 

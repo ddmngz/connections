@@ -66,6 +66,37 @@ impl Dom {
         set_button(&self.deselect_button, ButtonState::Disable);
     }
 
+    pub fn reset(&mut self) {
+        self.reset_dots();
+        self.disable_submit();
+        self.disable_deselect();
+        self.document
+            .get_element_by_id("board")
+            .unwrap()
+            .replace_with_with_node_1(&self.fresh_board())
+            .unwrap();
+    }
+
+    fn reset_dots(&self) {
+        let deactivated_dots = self.document.get_elements_by_class_name("deactivated-dot");
+        let deactivated_dots = CollectionVec::new(&deactivated_dots);
+        for dot in deactivated_dots {
+            dot.set_class_name("dot");
+        }
+    }
+
+    fn fresh_board(&self) -> Element {
+        let board = self.document.create_element("div").unwrap();
+        board.set_id("board");
+        board.set_class_name("board");
+        for _ in 0..16 {
+            let new_card = self.document.create_element("div").unwrap();
+            new_card.set_class_name("card");
+            board.append_with_node_1(&new_card).unwrap();
+        }
+        board
+    }
+
     pub fn toggle_select(&self, card_div: &Element) {
         card_div
             .class_list()

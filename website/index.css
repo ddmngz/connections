@@ -1,12 +1,25 @@
 @import "./animations.css";
 
+h1{
+    padding-top:40px;
+    text-align:center;
+    margin:auto;
+    padding-bottom:5px;
+}
+
+p{
+    text-align:center;
+    margin:auto;
+    font-weight:normal;
+}
+
 .game{
     display:flex;
     position: fixed; /* Sit on top of the page content */
     flex-direction: column;
     justify-content:space-evenly;
     width: 60%; /* Full width (cover the whole page) */
-    height: 67%; /* Full height (cover the whole page) */
+    height: 70%; /* Full height (cover the whole page) */
       top: 15%;
       left: 20%;
       right: 0;
@@ -181,6 +194,7 @@ input[type=text]{
   background-color: var(--connections-dark-beige);
   border-radius: 50%;
   display:inline-block;
+  transition: background-color .25s, scale .25s
 }
 
 .cover{
@@ -340,6 +354,8 @@ input[type=text]{
 
 .overlay-container.enabled{
     display:flex;
+    justify-content:flex-start;
+    margin:auto;
 }
 
 
@@ -347,7 +363,7 @@ input[type=text]{
   display:none;
   z-index: 3; /* Sit on top */
    width: max-content;
-  margin: auto;
+  margin: 10px auto;
   padding:10px 18px;
   text-align: center;
   background-color:black;
@@ -356,6 +372,12 @@ input[type=text]{
   border-radius: 6px;
   font-weight:600;
   transition: display .25s;
+  opacity:.8
+}
+
+.pop-up.button{
+  background-color:white;
+  color:black;
 }
 
 .pop-up.enabled{

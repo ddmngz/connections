@@ -160,6 +160,15 @@ impl GameState {
         let puzzle = ConnectionPuzzle::decode(&code)?;
         Ok(Self::new(puzzle))
     }
+
+    pub fn start_over(&mut self) {
+        self.mistakes = 0;
+        self.successes = 0;
+        self.board.reset();
+        self.prev_attempts.clear();
+        self.dom.reset();
+        self.render_cards();
+    }
 }
 
 impl GameState {

@@ -31,6 +31,12 @@ pub enum SelectionFailiure {
 }
 
 impl Board {
+    pub fn reset(&mut self) {
+        self.selection.clear();
+        self.matched_cards.clear();
+        self.shuffle();
+    }
+
     pub fn select(&mut self, index: usize) -> Result<SelectState, ()> {
         let key = self.get_key(index);
         // if it's selected already, get rid of it
