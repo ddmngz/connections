@@ -7,12 +7,11 @@ use super::color::Green;
 use super::color::Purple;
 use super::color::Yellow;
 use super::Board;
+use base64::{engine::general_purpose::URL_SAFE, Engine as _};
+use flate2::write::GzEncoder;
 use serde::{Deserialize, Serialize};
 use std::array;
 use std::marker::PhantomData;
-
-use base64::{engine::general_purpose::URL_SAFE, Engine as _};
-use flate2::write::GzEncoder;
 
 use flate2::write::GzDecoder;
 
@@ -81,27 +80,25 @@ impl ConnectionPuzzle {
     }
 
     pub fn encode(&self) -> String {
-        let mut cbor_bytes: Vec<u8> = Vec::new();
-        ciborium::into_writer(&self, &mut cbor_bytes).unwrap();
+        let postcard_bytes: Vec<u8> = postcard::to_allocvec(&self).expect("error serializing");
         let mut encoder = GzEncoder::new(Vec::new(), Compression::best());
-        encoder.write_all(&cbor_bytes).unwrap();
-        let compressed_cbor = encoder.finish().unwrap();
-        URL_SAFE.encode(&compressed_cbor)
+        encoder.write_all(&postcard_bytes).unwrap();
+        let compressed_bytes = encoder.finish().unwrap();
+        URL_SAFE.encode(&compressed_bytes)
     }
 
     pub fn decode(code: &str) -> Result<Self, TranscodingError> {
-        let compressed_cbor = URL_SAFE
+        let compressed_bytes = URL_SAFE
             .decode(code)
             .map_err(|_| TranscodingError::Base64)?;
 
-        let mut cbor_bytes = Vec::new();
-        let mut decoder = GzDecoder::new(&mut cbor_bytes);
+        let mut decoder = GzDecoder::new(Vec::new());
         decoder
-            .write_all(&compressed_cbor[..])
+            .write_all(&compressed_bytes[..])
             .map_err(|_| TranscodingError::Gzip)?;
 
-        let cbor_bytes = decoder.finish().unwrap();
-        ciborium::from_reader(&cbor_bytes[..]).map_err(|_| TranscodingError::Cbor)
+        let postcard_bytes = decoder.finish().unwrap();
+        postcard::from_bytes(&postcard_bytes[..]).map_err(|_| TranscodingError::Postcard)
     }
 
     pub fn all_keys(&self) -> [PuzzleKey; 16] {
@@ -138,7 +135,7 @@ impl ConnectionPuzzle {
 pub enum TranscodingError {
     Base64,
     Gzip,
-    Cbor,
+    Postcard,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]

@@ -11,8 +11,8 @@ rand = "0.8.5"
 wasm-bindgen = "0.2.95"
 getrandom = { version = "0.2", features = ["js"] }
 console_error_panic_hook = "0.1.7"
-serde = {version = "1.0.214", features = ["derive"]}
-ciborium = {version = "0.2.2"}
+postcard = {version = "1.0.0", features=["alloc"]}
+serde = {version = "1.0.214", features = ["derive"], default-features=false}
 base64 = "0.22.1"
 flate2 = "1.0.34"
 wasm-bindgen-futures = "0.4.45"
