@@ -1,7 +1,7 @@
 import init, {GameState, start_state, SelectionSuccess, GameFailiure, TranscodingError} from '/connections-builder/pkg/nyt_connections.js';
 
 async function run() {
-    const url = URL("https://ddmngz.github.io/connections-builder/pkg/nyt_connections_bg.wasm");
+    const url = new URL("https://ddmngz.github.io/connections-builder/pkg/nyt_connections_bg.wasm");
     const FetchOptions = {
         headers:{
             "Content-Type": "application/wasm",
