@@ -11,7 +11,6 @@ pub use puzzle::ConnectionPuzzle;
 use puzzle::PuzzleKey;
 use puzzle::TranscodingError;
 use std::collections::HashSet;
-use std::io::prelude::*;
 use wasm_bindgen::prelude::*;
 #[allow(unused_imports)]
 use web_sys::console;
@@ -51,7 +50,8 @@ impl GameState {
     pub fn select(&mut self, card: HtmlDivElement, card_id: usize) -> bool {
         let card_index = card_id - (self.board.matched_cards.len() * 4);
         console::log_1(&format!("index {}", card_index).into());
-        let Ok(state) = self.board.select(card_id) else {
+
+        if self.board.select(card_id).is_err() {
             return false;
         };
         self.dom.toggle_select(&card);

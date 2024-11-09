@@ -1,9 +1,9 @@
-import init, {GameState, start_state, SelectionSuccess, GameFailiure, TranscodingError} from '/connections-builder/pkg/nyt_connections.js';
+import init, {GameState, start_state, SelectionSuccess, GameFailiure, TranscodingError} from './wasm/pkg/nyt_connections.js';
 
 
 
 async function run() {
-    const url = new URL("https://ddmngz.github.io/connections-builder/pkg/nyt_connections_bg.wasm");
+    const url = "./wasm/pkg/nyt_connections_bg.wasm";
     const FetchOptions = {
         headers:{
             "Content-Type": "application/wasm",
@@ -78,20 +78,29 @@ function main(state){
     function display_won(){
         document.getElementById("overlay-container").classList.add("enabled");
         document.getElementById("win").classList.add("enabled");
+        show_end_buttons();
+    }
+
+    function show_end_buttons(){
         document.getElementById("again").classList.add("enabled");
+        document.getElementById("share").classList.add("enabled");
+        document.getElementById("back").classList.add("enabled");
     }
 
     function display_lost(){
         document.getElementById("overlay-container").classList.add("enabled");
         document.getElementById("lose").classList.add("enabled");
-        document.getElementById("again").classList.add("enabled");
+
+        show_end_buttons();
     }
 
     function hide_overlay(){
         document.getElementById("overlay-container").classList.remove("enabled");
         document.getElementById("win").classList.remove("enabled");
+        document.getElementById("lose").classList.remove("enabled");
         document.getElementById("again").classList.remove("enabled");
-
+        document.getElementById("share").classList.remove("enabled");
+        document.getElementById("back").classList.remove("enabled");
     }
 
     const init_buttons = () => {
@@ -191,31 +200,18 @@ function main_with_code(code){
 
 function entry_point(){
     let url = new URL(document.URL);
-    if(url.hash == ""){
-        default_main();
+    const game_code = url.searchParams.get("game");
+    if(game_code != null){
+        main_with_code(game_code)
     }else{
-        console.log(url.hash);
-        main_with_code(url.hash.slice(1));
+        default_main();
     }
-
 }
 
 addEventListener("load", (_) => {
-    console.log("onload")
-    // on load, enable html
     document.documentElement.removeAttribute("hidden");
 });
 
 await run();
-//console.log("calling main");
-//default_main();
 entry_point();
-
-
-
-// onclick
-
-
-// register render
-
 

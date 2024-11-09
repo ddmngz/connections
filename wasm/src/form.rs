@@ -1,20 +1,18 @@
 use crate::game::color::Color;
 use crate::game::ConnectionPuzzle;
-use std::sync::OnceLock;
+use std::sync::RwLock;
 use wasm_bindgen::prelude::*;
 use web_sys::console;
 use web_sys::Clipboard;
 use web_sys::Document;
 use web_sys::Element;
+use web_sys::HtmlAnchorElement;
 use web_sys::HtmlInputElement;
 use web_sys::Url;
 
 thread_local! {
     pub static DOM: Dom = Dom::new().unwrap();
-
-
     pub static SUBMIT_CALLBACK: Closure<dyn FnMut()> = Closure::<dyn FnMut()>::new(encode);
-
     pub static CLIPBOARD_CALLBACK: Closure<dyn FnMut()> = Closure::<dyn FnMut()>::new(move || {
         DOM.with(|dom| dom.copy_to_clipboard());
     });
@@ -37,7 +35,10 @@ fn encode() {
     let args_ref = args.each_ref().map(get_ref);
     let puzzle = ConnectionPuzzle::new(args_ref[0], args_ref[1], args_ref[2], args_ref[3]);
     let code = puzzle.encode();
-    DOM.with(|dom| dom.render_url(&code));
+    DOM.with(|dom| {
+        dom.update_url(&code);
+        dom.render_url()
+    });
 }
 
 type StringTuple = (String, [String; 4]);
@@ -51,17 +52,16 @@ fn get_ref(tuple: &StringTuple) -> StrTuple {
 }
 
 struct Dom {
-    document: Document,
     blue: InputSet,
     purple: InputSet,
     yellow: InputSet,
     green: InputSet,
     button: Element,
-    link_button: Element,
+    link_button: HtmlAnchorElement,
     copy_link_button: Element,
     url: Url,
     clipboard: Clipboard,
-    link: OnceLock<String>,
+    link: RwLock<Option<String>>,
 }
 
 impl Dom {
@@ -71,9 +71,11 @@ impl Dom {
         let button = document
             .get_element_by_id("submit")
             .expect("no button found");
-        let link_button = document
-            .get_element_by_id("go_to_game")
-            .expect("no button found");
+        let link_button = get_anchor_elem(
+            document
+                .get_element_by_id("go_to_game")
+                .expect("no button found"),
+        );
         let copy_link_button = document
             .get_element_by_id("copy_link")
             .expect("no button found");
@@ -81,10 +83,9 @@ impl Dom {
         let url = Url::new(&document.url().map_err(|_| ())?).map_err(|_| ())?;
         let clipboard = window.navigator().clipboard();
         let (blue, purple, yellow, green) = InputSet::new_set(&document).map_err(|_| ())?;
-        let link = OnceLock::new();
+        let link = RwLock::new(None);
         Ok(Self {
             copy_link_button,
-            document,
             link_button,
             blue,
             purple,
@@ -111,23 +112,28 @@ impl Dom {
         })
     }
 
-    fn render_url(&self, code: &str) {
-        self.link_button.set_class_name("button");
-        self.copy_link_button.set_class_name("button");
-        let url = format!("{}/#{}", self.url.host(), code);
-        self.link_button.set_attribute("href", &url).unwrap();
-        self.link.set(url).unwrap();
+    fn update_url(&self, code: &str) {
+        let url = format!("?game={}", code);
+        self.url.set_search(&url);
+        *self.link.write().unwrap() = Some(self.url.href());
         console::log_1(&code.into())
     }
 
+    fn render_url(&self) {
+        self.link_button.set_class_name("button");
+        self.copy_link_button.set_class_name("button");
+        self.link_button.set_href(&self.url.href());
+    }
+
     fn copy_to_clipboard(&self) {
-        if let Some(link) = self.link.get() {
+        if let Some(link) = self.link.read().unwrap().as_ref() {
             use wasm_bindgen_futures::spawn_local;
             use wasm_bindgen_futures::JsFuture;
             let future = JsFuture::from(self.clipboard.write_text(link));
             spawn_local(async move {
                 future.await.unwrap();
             })
+            // do something to indicate it's been copied to clipboard;
         }
     }
 }
@@ -173,11 +179,10 @@ impl InputSet {
     }
 }
 
-fn get_input_elem(elem: Element) -> HtmlInputElement {
+fn get_anchor_elem(elem: Element) -> HtmlAnchorElement {
     elem.dyn_into().unwrap()
 }
 
-fn get_input_elem_value(elem: Element) -> String {
-    let input: HtmlInputElement = elem.dyn_into().unwrap();
-    input.value()
+fn get_input_elem(elem: Element) -> HtmlInputElement {
+    elem.dyn_into().unwrap()
 }

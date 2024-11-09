@@ -1,74 +1,84 @@
 <!DOCTYPE html>
-<html hidden="">
+
+<html hidden>
   <head>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
-    <link rel="stylesheet" href="website/index.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@100..900&display=swap" rel="stylesheet">
-    <script type="module" src="/website/index.js"></script>
+
+    <link rel="stylesheet" href="index.css">
+    <script type="module" src="index.js"></script>
+    <link rel="prefetch" as="document" href="./game.html" />
+
+    <link rel="modulepreload" href="./wasm/pkg/nyt_connections.js" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <title> Connections Generator</title>
   </head>
   <body>
+      <h1>Connections Generator</h1>
+      <p> Make your game then start playing!</p>
+
 
 <div class="container" >  
 <div class="game" >  
-    <p> Match pairs of four!</p>
   <div class="board" id="board">
-    <div class="card"></div>
-    <div class="card"></div>
-    <div class="card"></div>
-    <div class="card"></div>
+      <div class="matched-set " id="blue"> 
+          <input type="text" placeholder="theme" class="theme">
 
+          <br>
+          <div class="word-set" > 
+            <input type="text" maxlength=30 placeholder="word">
+            <input type="text" maxlength=30 placeholder="word">
+            <input type="text" maxlength=30 placeholder="word">
+            <input type="text" maxlength=30 placeholder="word">
+          </div>
+      </div>
+      <div class="matched-set" id="yellow"> 
+          <input type="text" placeholder="theme" class="theme">
 
-      <div class="card"></div>
-      <div class="card"></div>
-      <div class="card"></div>
-      <div class="card"></div>
+          <br>
+          <div class="word-set" > 
+            <input type="text" maxlength=30 placeholder="word">
+            <input type="text" maxlength=30 placeholder="word">
+            <input type="text" maxlength=30 placeholder="word">
+            <input type="text" maxlength=30 placeholder="word">
 
-      <div class="card"></div>
-      <div class="card"></div>
-      <div class="card" ></div>
-      <div class="card"></div>
+            </div>
 
-      <div class="card"></div>
-      <div class="card"></div>
-      <div class="card"></div>
-      <div class="card"></div>
+      </div>
+      <div class="matched-set" id="green"> 
+          <input type="text" placeholder="theme" class="theme">
+
+          <br>
+          <div class="word-set" > 
+            <input type="text" maxlength=30 placeholder="word">
+            <input type="text" maxlength=30 placeholder="word">
+            <input type="text" maxlength=30 placeholder="word">
+            <input type="text" maxlength=30 placeholder="word">
+        </div>
+      </div>
+      <div class="matched-set" id="purple"> 
+
+          <input type="text" placeholder="theme" class="theme">
+
+          <br>
+          <div class="word-set" > 
+            <input type="text" maxlength=30 placeholder="word">
+            <input type="text" maxlength=30 placeholder="word">
+            <input type="text" maxlength=30 placeholder="word">
+            <input type="text" maxlength=30 placeholder="word">
+        </div>
+
+      </div>
   </div> 
-
-  <div class="remaining_tries"> 
-      Mistakes remaining:
-     <span class="dot"></span>
-     <span class="dot"></span>
-     <span class="dot"></span>
-     <span class="dot"></span> 
+  <div class="Buttons">
+  <a class="hidden_button" id="go_to_game" target="_blank">Play Game </a>
+  <div class="button" id="submit"> Generate Game!</div>
+  <a class="hidden_button" id="copy_link" target="_blank">Copy Game Link </a>
   </div>
 
-  <div class="Buttons"> 
-    <div class="button", id="shuffle"> Shuffle </div> 
-    <div class="hidden_button" id="deselect"> Deselect All</div>
-    <div class="hidden_button" id="submit"> Submit</div>
-  </div>
-
-  <div class="MessageBox" id="away">
-      One Away...
-  </div>
-
-  <div class="MessageBox" id="already">
-      Already Guessed!
-  </div>
-
-  <br>
-  </div>
-  </div>
-    <div class="pop-up">One Away</div>
-    <div class="pop-up">Already Guessed!</div>
-  <div class="overlay-container" id="overlay-container">
-        <div class="pop-up" id="win">You Win!</div>
-        <div class="pop-up" id="lose">Better luck next time!</div>
-        <div class="pop-up button" id="again">Play Again</div>
-        <div class="overlay">
-    </div>
+  <a class="hidden_button" id="random_game" target="_blank">Play a Random Game</a>
   </div>
 
   </body>
