@@ -1,4 +1,4 @@
-import init, {GameState, start_state, SelectionSuccess, GameFailiure, TranscodingError} from './pkg/nyt_connections.js';
+import init, {GameState, start_state, SelectionSuccess, GameFailiure, TranscodingError} from '/pkg/nyt_connections.js';
 
 async function run() {
     const url = URL("https://ddmngz.github.io/connections-builder/pkg/nyt_connections_bg.wasm");
