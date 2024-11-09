@@ -1,5 +1,7 @@
 import init, {GameState, start_state, SelectionSuccess, GameFailiure, TranscodingError} from '/connections-builder/pkg/nyt_connections.js';
 
+
+
 async function run() {
     const url = new URL("https://ddmngz.github.io/connections-builder/pkg/nyt_connections_bg.wasm");
     const FetchOptions = {
@@ -198,7 +200,11 @@ function entry_point(){
 
 }
 
-
+addEventListener("load", (_) => {
+    console.log("onload")
+    // on load, enable html
+    document.documentElement.removeAttribute("hidden");
+});
 
 await run();
 //console.log("calling main");
