@@ -1,7 +1,7 @@
-import init, {GameState, start_state, SelectionSuccess, GameFailiure, TranscodingError} from './pkg/nyt_connections.js';
+import init, {GameState, start_state, SelectionSuccess, GameFailiure, TranscodingError} from './connections-builder/pkg/nyt_connections.js';
 
 async function run() {
-    const module = await WebAssembly.compileStreaming(fetch("./pkg/nyt_connections_bg.wasm", {    headers: {
+    const module = await WebAssembly.compileStreaming(fetch("./connections-builder/pkg/nyt_connections_bg.wasm", {    headers: {
       "Content-Type": "application/wasm",
     },}));
 
