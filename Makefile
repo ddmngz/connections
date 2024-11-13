@@ -1,15 +1,11 @@
-all: move 
+all: setup 
 
-setup: move
+setup: build
 
 build:
 	wasm-pack build ./nyt_connections --target=web --out-dir="../site/pkg"
 
-
-move: build
-	cp *.html *.js *.css ./site/
-
-serve: move
+serve: build
 	./server.py
 
 clean: 
