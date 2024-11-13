@@ -85,12 +85,12 @@ function main(state){
         document.getElementById("again").classList.add("enabled");
         document.getElementById("share").classList.add("enabled");
         document.getElementById("back").classList.add("enabled");
+        document.getElementById("edit-me").classList.add("enabled");
     }
 
     function display_lost(){
         document.getElementById("overlay-container").classList.add("enabled");
         document.getElementById("lose").classList.add("enabled");
-
         show_end_buttons();
     }
 
@@ -106,12 +106,18 @@ function main(state){
     const init_buttons = () => {
         const submit = document.getElementById("submit");
         submit.addEventListener("click", async () => {
+	    const classList = submit.classList;
+	    if(classList.contains("hidden")){
+		    return
+	    }
+	    classList.add("hidden");
             try{
                 await jump_selection();
                 if(state.check_selection() == SelectionSuccess.Won){
                     display_won();
                 }
             }catch (exceptionVar){
+		    //console.log(GameFailiure[exceptionVar]);
                 switch (exceptionVar){
                     case GameFailiure.Mismatch: // MISMATCH
                         shake_selection();
@@ -129,9 +135,10 @@ function main(state){
                         break;
                     case GameFailiure.AlreadyTried:
                         already_guessed();
-
                 }
-            }
+            }finally{
+	    	submit.classList.remove("hidden");
+	    }
         });
 
         const shuffle = document.getElementById("shuffle");
@@ -152,23 +159,57 @@ function main(state){
         const deselect = document.getElementById("deselect");
 
         deselect.addEventListener("click", () => {
+	    if(deselect.classList.contains("hidden")){
+		    return
+	    }
             state.clear_selection();
         });
 
         const try_again = document.getElementById("again")
         try_again.addEventListener("click", () =>{
             state.start_over();
+	    setup_cards();
             hide_overlay();
+        });
+
+        const share = document.getElementById("share")
+        share.addEventListener("click", async () =>{
+	    const code = state.puzzle_code();
+	    const url = new URL(document.location.href);
+		// is this secure,,
+	    url.searchParams.set("game",code);
+	    await window.navigator.clipboard.writeText(url.href);
+	    state.clipboard_copied();
+        });
+
+        const back = document.getElementById("back")
+        back.addEventListener("click", () =>{   
+	    const url = new URL("../",document.location.href);
+            self.window.location.assign(url);
+        });
+
+        const edit_me = document.getElementById("edit-me")
+        edit_me.addEventListener("click", () =>{
+	    const code = state.puzzle_code();
+	    console.log(code);
+	    const url = new URL("../",document.location.href);
+	    url.searchParams.delete("game");
+	    url.searchParams.set("puzzle",code);
+	    console.log(url);
+            self.window.location.assign(url);
         });
     }
 
+    function setup_cards(){
+	const game_board = document.getElementById("board");
+	const cards = Array.from(game_board.children);
+	cards.forEach(initializeCards);
+	state.render_cards();
+    }
 
-    const game_board = document.getElementById("board");
-    const cards = Array.from(game_board.children);
-    cards.forEach(initializeCards);
-    state.render_cards();
+    setup_cards();
     init_buttons();
-    state.puzzle_code();
+    console.log(state.puzzle_code());
 }
 
 function default_main(){

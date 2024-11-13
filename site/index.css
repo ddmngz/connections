@@ -25,10 +25,9 @@ p{
     display:flex;
     flex-direction: column;
     justify-content:space-evenly;
-      z-index: -0; /* Specify a stack order in case you're using a different order for other elements */
-  margin: auto;
-  height:70vh;
-
+    z-index: -0; /* Specify a stack order in case you're using a different order for other elements */
+    margin: auto;
+    height:70vh;
 }
 
 .board_container{
@@ -228,6 +227,13 @@ input[type=text]{
   border-style:solid;
   border-color:var(--connections-extra-dark-beige);
   border-width:thin;
+  transition: border-color ease .15s, color ease .15s
+}
+
+.button.hidden{
+  cursor: default;
+  border-color:var(--connections-dark-beige);
+  color:var(--connections-dark-beige);
 }
 
 .hidden_button{

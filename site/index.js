@@ -1,8 +1,17 @@
-import init, {setup} from './pkg/nyt_connections.js';
+import init, {setup, setup_with_code} from './pkg/nyt_connections.js';
 
-async function run() {
+async function load_asm(){
     const module = await WebAssembly.compileStreaming(fetch("./pkg/nyt_connections_bg.wasm"));
     await init(module);
+}
+
+async function run_with_code(code) {
+    load_asm();
+    setup_with_code(code);
+}
+
+async function run() {
+	load_asm();
     setup();
 }
 
@@ -11,7 +20,7 @@ addEventListener("load", (_) => {
 });
 
 
-function main(){
+async function main(){
     let url = new URL(document.URL);
     if(url.searchParams.get("game") != null){
         let game_code = url.search;
@@ -21,7 +30,14 @@ function main(){
         game_url.search = game_code;
         self.window.location.assign(game_url);
     }else{
-        run();
+	await load_asm();
+	if (url.searchParams.get("puzzle") != null){
+		let game_code = url.searchParams.get("puzzle");
+        	console.log(game_code);
+		run_with_code(game_code);
+	}else{
+	    run();
+	}
     }
 }
 

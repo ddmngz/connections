@@ -31,8 +31,8 @@ pub struct ConnectionPuzzle {
 
 #[derive(Serialize, Deserialize)]
 pub struct ConnectionSet<Color: AsColor> {
-    theme: String,
-    words: [String; 4],
+    pub theme: String,
+    pub words: [String; 4],
     color: PhantomData<Color>,
 }
 

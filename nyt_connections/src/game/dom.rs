@@ -70,6 +70,7 @@ impl Dom {
         self.reset_dots();
         self.disable_submit();
         self.disable_deselect();
+        // if everything's in rust i can more easily target the new cards, i'll save that for the futu,he
         self.document
             .get_element_by_id("board")
             .unwrap()
@@ -170,11 +171,11 @@ enum ButtonState {
 }
 
 fn set_button(button: &Element, state: ButtonState) {
-    let new = match state {
-        ButtonState::Enable => "button",
-        ButtonState::Disable => "hidden_button",
+    let list = button.class_list();
+    match state {
+        ButtonState::Enable => list.remove_1("hidden").unwrap(),
+        ButtonState::Disable => list.add_1("hidden").unwrap(),
     };
-    button.set_class_name(new);
 }
 
 struct CollectionVec {

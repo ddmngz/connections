@@ -8,6 +8,7 @@ use color::Color;
 use dom::Dom;
 use puzzle::Card;
 pub use puzzle::ConnectionPuzzle;
+pub use puzzle::ConnectionSet;
 use puzzle::PuzzleKey;
 use puzzle::TranscodingError;
 use std::collections::HashSet;
@@ -32,9 +33,8 @@ pub fn start_state() -> GameState {
 
 #[wasm_bindgen]
 impl GameState {
-    pub fn puzzle_code(&self) {
-        let string = self.board.puzzle.encode();
-        console::log_1(&string.into());
+    pub fn puzzle_code(&self) -> String {
+        self.board.puzzle.encode()
     }
 
     pub fn render_cards(&mut self) {
@@ -165,6 +165,10 @@ impl GameState {
         self.prev_attempts.clear();
         self.dom.reset();
         self.render_cards();
+    }
+
+    pub fn clipboard_copied(&self) {
+        console::log_1(&"copied to clipboard!".into());
     }
 }
 

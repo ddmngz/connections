@@ -1,5 +1,7 @@
+use crate::game::color::AsColor;
 use crate::game::color::Color;
 use crate::game::ConnectionPuzzle;
+use crate::game::ConnectionSet;
 use std::sync::RwLock;
 use wasm_bindgen::prelude::*;
 use web_sys::console;
@@ -22,6 +24,11 @@ thread_local! {
 #[wasm_bindgen]
 pub fn setup() {
     DOM.with(Dom::init);
+}
+
+#[wasm_bindgen]
+pub fn setup_with_code(code: &str) {
+    DOM.with(|dom| dom.init_with_code(code));
 }
 
 fn encode() {
@@ -98,6 +105,26 @@ impl Dom {
         })
     }
 
+    fn error_decoding(&self) {
+        todo!()
+    }
+
+    fn init_with_code(&self, code: &str) {
+        self.init();
+        let puzzle = ConnectionPuzzle::decode(code).unwrap();
+        /*
+        let Ok(puzzle) = ConnectionPuzzle::decode(code) else {
+            self.error_decoding();
+            return;
+        };
+        */
+
+        self.blue.set_with_set(puzzle.blue());
+        self.yellow.set_with_set(puzzle.yellow());
+        self.purple.set_with_set(puzzle.purple());
+        self.green.set_with_set(puzzle.green());
+    }
+
     fn init(&self) {
         SUBMIT_CALLBACK.with(|closure| {
             self.button
@@ -150,6 +177,14 @@ impl InputSet {
         let yellow = Self::new(Color::Yellow, document)?;
         let green = Self::new(Color::Green, document)?;
         Ok((blue, purple, yellow, green))
+    }
+
+    fn set_with_set<T: AsColor>(&self, set: &ConnectionSet<T>) {
+        self.theme_input.set_value(&set.theme);
+        use std::iter::zip;
+        for (input, word) in zip(&self.other_inputs, &set.words) {
+            input.set_value(word);
+        }
     }
 
     fn new(color: Color, document: &Document) -> Result<Self, ()> {
