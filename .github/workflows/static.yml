@@ -31,8 +31,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: wasm
-        run: cargo install wasm-pack     
+      - name: wasm-pack
+        uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-pack
       - name: Checkout
         uses: actions/checkout@v4
       - name: build
