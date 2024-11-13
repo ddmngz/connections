@@ -7,7 +7,7 @@ build:
 
 
 move: build
-	cp -r *.html *.js *.css ./nyt_connections/pkg ./site/
+	cp *.html *.js *.css ./site/
 
 serve: move
 	./server.py
