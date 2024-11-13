@@ -3,7 +3,7 @@ all: move
 setup: move
 
 build:
-	wasm-pack build ./nyt_connections --target=web --out-dir="./site/pkg"
+	wasm-pack build ./nyt_connections --target=web --out-dir="../site/pkg"
 
 
 move: build
@@ -12,6 +12,8 @@ move: build
 serve: move
 	./server.py
 
+clean: 
+	rm -r ./site/*
 
-.PHONY: build move serve all
+.PHONY: build move serve all setup clean
 
