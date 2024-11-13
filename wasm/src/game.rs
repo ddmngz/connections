@@ -48,9 +48,6 @@ impl GameState {
     }
 
     pub fn select(&mut self, card: HtmlDivElement, card_id: usize) -> bool {
-        let card_index = card_id - (self.board.matched_cards.len() * 4);
-        console::log_1(&format!("index {}", card_index).into());
-
         if self.board.select(card_id).is_err() {
             return false;
         };
@@ -221,9 +218,9 @@ pub enum SelectionSuccess {
 #[wasm_bindgen]
 #[repr(u8)]
 pub enum GameFailiure {
-    Mismatch,
-    NotEnough,
-    OneAway,
-    Lost,
-    AlreadyTried,
+    Mismatch = 0,
+    NotEnough = 1,
+    OneAway = 2,
+    Lost = 3,
+    AlreadyTried = 4,
 }

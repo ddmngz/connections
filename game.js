@@ -127,7 +127,7 @@ function main(state){
                         shake_selection();
                         display_lost();
                         break;
-                    case GameFailiure.AlreadyGuessed:
+                    case GameFailiure.AlreadyTried:
                         already_guessed();
 
                 }
@@ -169,7 +169,6 @@ function main(state){
     state.render_cards();
     init_buttons();
     state.puzzle_code();
-
 }
 
 function default_main(){
@@ -182,18 +181,19 @@ function main_with_code(code){
         let state = GameState.from_code(code);
         main(state)
     }catch(e){
+        let error;
         switch (e){
             case TranscodingError.Base64:
-                console.log("base64");
+                error = "base64";
                 break;
             case TranscodingError.Gzip:
-                console.log("gzip");
+                error = "gzip";
                 break;
             case TranscodingError.Cbor:
-                console.log("cbor");
+                error = "postcard";
                 break;
         }
-        console.log("error",e);
+        console.log("error",e, error);
     }
 }
 
