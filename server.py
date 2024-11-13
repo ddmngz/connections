@@ -4,10 +4,14 @@
 import http.server
 
 PORT = 8000
+DIRECTORY="./site"
 
 class NoCacheHTTPRequestHandler(
     http.server.SimpleHTTPRequestHandler
 ):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory=DIRECTORY, **kwargs)
+
     def send_response_only(self, code, message=None):
         super().send_response_only(code, message)
         self.send_header('Cache-Control', 'no-store, must-revalidate')
@@ -16,5 +20,5 @@ class NoCacheHTTPRequestHandler(
 if __name__ == '__main__':
     http.server.test(
         HandlerClass=NoCacheHTTPRequestHandler,
-        port=PORT
+        port=PORT,
     )

@@ -1,0 +1,418 @@
+@import "./animations.css";
+
+@media (min-width:320px)  { /* smartphones, iPhone, portrait 480x320 phones */ }j
+
+header{
+    text-align: justify;
+}
+
+h1{
+    padding-top:40px;
+    text-align:center;
+    margin:auto;
+    padding-bottom:5px;
+}
+
+p{
+    text-align:center;
+    margin:auto;
+    font-weight:normal;
+}
+
+
+
+.game{
+    display:flex;
+    flex-direction: column;
+    justify-content:space-evenly;
+      z-index: -0; /* Specify a stack order in case you're using a different order for other elements */
+  margin: auto;
+  height:70vh;
+
+}
+
+.board_container{
+
+  padding: 20px;
+    display:flex;
+    position: fixed; /* Sit on top of the page content */
+    justify-content:center;
+    width: 100%; /* Full width (cover the whole page) */
+    height: calc(3 * 8px + 4 * 80px);
+
+    top: 25%;
+    bottom:50%;
+    margin: auto;
+  z-index: -0; /* Specify a stack order in case you're using a different order for other elements */
+
+}
+
+
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  height: calc(3 * 8px + 4 * 80px);
+  background-color: #FFFFFF;
+  gap:8px;
+  width: calc(3 * 8px + 4 * 150px);
+  min-height: 0;
+  min-width: 0;
+  margin:auto;
+  position:relative;
+  /*left: 400px;*/
+  /*position:;*/
+  column-gap: 8px;
+  row-gap: 8px;
+  z-index: 1; /* Specify a stack order in case you're using a different order for other elements */
+}
+
+input[type=text].theme{
+    background-color:inherit;
+    border:none;
+    font:inherit;
+    text-transform: uppercase;
+    font-weight: 700;
+    display:inline;
+}
+
+.word-set{
+    display:flex;
+    flex-grow:0;
+    flex-shrink:1;
+    justify:center;
+}
+
+input[type=text]{
+    text-align:center;
+    width: content-max;
+    background-color:inherit;
+    border:none;
+    font:inherit;
+    text-transform: uppercase;
+
+    width:50%;
+    display:inline;
+}
+
+.matched-set.blue {
+    display:inline-block;
+    background-color: var(--connections-blue);
+}
+
+.word{
+    display:inline;
+}
+
+.matched-set {
+  grid-column-end: span 4;
+  border-radius: 6px;
+  padding: 20px;
+  font-size: 20px;
+  font-weight: 400;
+  text-align: center;
+  cursor: default;
+  text-transform: uppercase;
+  font-family: "Libre Franklin", sans-serif;
+  font-style: normal; 
+  z-index: -1; /* Specify a stack order in case you're using a different order for other elements */
+  position:sticky;
+  transition: background-color .25s, color .25s;
+    height: 40px;
+}
+
+.card {
+  height: 40px;
+  line-height:40px;
+  border-radius: 6px;
+  background-color: var(--connections-light-beige);
+  padding: 20px;
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-family: "Libre Franklin", sans-serif;
+  font-style: normal; 
+  z-index: -1; /* Specify a stack order in case you're using a different order for other elements */
+  position:sticky;
+  transition: background-color .25s, color .25s;
+}
+
+.card.shuffling{
+    color: rgba(0,0,0,0)
+}
+
+.card.selected.shuffling {
+  color:rgba(0,0,0,0);
+}
+
+.card.selected {
+  background-color: var(--connections-darker-beige);
+  color:white;
+}
+
+#yellow{
+    background-color: var(--connections-yellow);
+}
+
+#purple{
+    background-color: var(--connections-maroon);
+}
+
+#green{
+    background-color: var(--connections-green);
+}
+
+#blue{
+    background-color: var(--connections-blue);
+}
+
+
+.remaining_tries{
+    display:flex;
+  border-radius: 6px;
+  width: 35%;
+  margin:auto;
+  align:center;
+  text-align: center;
+  font-weight: 600;
+  font-size:16px;
+  cursor: default;
+}
+
+ .dot {
+  margin:auto;
+  height: 15px;
+  width: 15px;
+  background-color: var(--connections-extra-dark-beige);
+  border-radius: 50%;
+  display: inline-block;
+  transition: background-color .25s, scale .25s
+}
+
+ .deactivated-dot {
+  margin:auto;
+  height: 15px;
+  width: 15px;
+  background-color: var(--connections-dark-beige);
+  border-radius: 50%;
+  display:inline-block;
+  transition: background-color .25s, scale .25s
+}
+
+.cover{
+  height: calc(3 * 8px + 80px);
+  padding: 20px;
+  width: calc(3 * 8px + 4 * 150px);
+  min-height: 0;
+  min-width: 0;
+  margin:auto;
+  z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
+  background-color: rgba(100,100,100,.5);
+  position: fixed
+}
+
+.button{
+  cursor: pointer;
+  font-size:15px;
+  padding: 20px;
+  border-radius: 60px;
+  width: max-content;
+  margin:auto;
+  align:center;
+
+  text-align: center;
+  font-weight: 500;
+  border-style:solid;
+  border-color:var(--connections-extra-dark-beige);
+  border-width:thin;
+}
+
+.hidden_button{
+  cursor: default;
+  font-size:15px;
+  padding:20px;
+  border-radius: 60px;
+  width: max-content;
+  margin:auto;
+  align:center;
+  cursor: default;
+
+  text-align: center;
+  font-weight: 500;
+  border-style:solid;
+  border-color:var(--connections-dark-beige);
+  color:var(--connections-dark-beige);
+  border-width:thin;
+}
+
+.Buttons{
+  display: flex;
+  position:relative;
+  margin-top: 10px;
+  flex-direction: row;
+  align-items:center;
+  justify-content:center;
+}
+
+
+
+.MessageBox{
+  display: flex;
+  justify-content: center;
+  margin: auto;
+  padding:10px 18px;
+  width: max-content;
+  align-items: center;
+  text-align: center;
+  min-height: 100;
+  background-color:black;
+  color:white;
+  font-size:medium;  
+  border-radius: 6px;
+  font-weight:600;
+  opacity:0;
+  transition: opacity .25s;
+}
+
+:root{
+  --connections-light-beige: #efefe6;
+  --connections-beige: #cfcfbf;
+  --connections-dark-beige: #a39f95;
+  --connections-darker-beige: #656458;
+  --connections-extra-dark-beige: #5a594e;
+  --connections-yellow: #f9df6d;
+  --connections-maroon: #ba81c5;
+  --connections-blue: #b0c4ef;
+  --connections-green: #a0c35a;
+  --connections-dark-purple: #861cab;
+  --sb-dark-gray: #38383f;
+  font-size: 20px;
+  font-weight: 700;
+  color:black;
+    font-family: "Libre Franklin", sans-serif;
+  font-style: normal;
+  flex-shrink:0;
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
+}
+
+@media screen and (max-width: 600px) {
+    :root{
+        font-size:1em;
+    }
+
+.board {
+    width: 80vw;
+  min-height: 0;
+  min-width: 0;
+  margin:auto;
+  position:relative;
+  /*left: 400px;*/
+  /*position:;*/
+  column-gap: 8px;
+  row-gap: 8px;
+  z-index: 1; /* Specify a stack order in case you're using a different order for other elements */
+}
+
+.button{
+    padding:11px;
+}
+
+.hidden_button{
+    padding:11px;
+}
+}
+
+
+
+.container{
+    display:flex;
+    position: fixed; /* Sit on top of the page content */
+    flex-direction: column;
+    justify-content:space-evenly;
+    width: 100%; /* Full width (cover the whole page) */
+    height: 100%; /* Full height (cover the whole page) */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom:0;
+    z-index: -0; /* Specify a stack order in case you're using a different order for other elements */
+}
+
+
+
+
+
+.overlay{
+  position: fixed; /* Stay in place */
+  z-index: 2; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  margin: auto;
+  padding:10px 18px;
+  text-align: center;
+  min-height: 100%;
+  background-color:white;
+  font-size:medium;  
+  border-radius: 6px;
+  font-weight:600;
+  opacity:.6;
+  transition: display .25s;
+}
+
+.overlay-container{
+  display:none;
+  flex-direction:column;
+  justify-content:space-around;
+  position: fixed; /* Stay in place */
+  z-index: 2; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  animation: display .25s;
+}
+
+.overlay-container.enabled{
+    display:flex;
+    justify-content:flex-start;
+    margin:auto;
+}
+
+
+.pop-up{
+  display:none;
+  z-index: 3; /* Sit on top */
+   width: max-content;
+  margin: 10px auto;
+  padding:10px 18px;
+  text-align: center;
+  background-color:black;
+  color:white;
+  font-size:medium;  
+  border-radius: 6px;
+  font-weight:600;
+  transition: display .25s;
+  opacity:.8
+}
+
+.pop-up.button{
+  background-color:white;
+  color:black;
+}
+
+.pop-up.enabled{
+    display:block;
+}
+
+a{
+  text-decoration: none;
+  color:inherit;
+  }
