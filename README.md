@@ -1,5 +1,14 @@
 TODO:
 - [ ] Write Readme 
-- [ ] Fix Win/Lost Screen bug
-- [ ] Fix Github Actions
-- [ ] Make it so you can go back and edit a puzzle once you're done with it
+- [x] Fix Github Actions
+
+Features:
+    - [ ] Edit This Puzzle
+    - [ ] Settings(?) -> Restart
+    - [ ] Timer(?)
+    - [ ] Try a Random Connection
+    - [ ] Responsive Mobile
+
+BugFixes: 
+    - [ ] Try Again
+    - [x] One Away
