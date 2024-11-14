@@ -49,30 +49,32 @@
     <div class="button hidden" id="submit"> Submit</div>
   </div>
 
-  <div class="MessageBox" id="away">
-      One Away...
-  </div>
 
-  <div class="MessageBox" id="already">
-      Already Guessed!
-  </div>
+
+    <dialog class="pop-up" id="away">One Away...</dialog>
+
+    <dialog class="pop-up" id="already">Already Guessed!</dialog>
 
   <br>
   </div>
   </div>
-    <div class="pop-up">One Away</div>
-    <div class="pop-up">Already Guessed!</div>
-  <div class="overlay-container" id="overlay-container">
-        <div class="pop-up" id="win">You Win!</div>
-        <div class="pop-up" id="lose">Better luck next time!</div>
-        <div class="Buttons">
-            <div class="pop-up button enabled" id="again">Play Again</div>
-            <div class="pop-up button enabled" id="share">Share Link</div>
-            <div class="pop-up button enabled" id="back">Make a New Puzzle</div>
-            <div class="pop-up button enabled" id="edit-me">Edit This Puzzle</div>
+  <dialog id="endscreen">
+      <header>
+        <div class="end-state" id="win">You Win!</div>
+        <div class="end-state" id="lose">Better luck next time!</div>
+      </header>
+        <div class="Buttons end">
+
+            <div class="end button enabled" id="again">Play Again</div>
+            <div class="end button" id="see-board">View Board</div>
+            <div class="end button enabled" id="share">Copy Link</div>
+            <div class="end button enabled" id="edit-me">Edit This Puzzle</div>
+            <div class="end button enabled" id="back">Make another Puzzle</div>
+
+            <dialog class="pop-up" id="copied">Copied to clipboard!</dialog>
         </div>
-        <div class="overlay">
-    </div>
+    </dialog>
+
   </div>
 
   </body>

@@ -4,6 +4,8 @@ use crate::game::ConnectionPuzzle;
 use crate::game::ConnectionSet;
 use std::sync::RwLock;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen_futures::spawn_local;
+use wasm_bindgen_futures::JsFuture;
 use web_sys::console;
 use web_sys::Clipboard;
 use web_sys::Document;
@@ -11,14 +13,32 @@ use web_sys::Element;
 use web_sys::HtmlAnchorElement;
 use web_sys::HtmlInputElement;
 use web_sys::Url;
+use web_sys::Window;
 
 thread_local! {
     pub static DOM: Dom = Dom::new().unwrap();
     pub static SUBMIT_CALLBACK: Closure<dyn FnMut()> = Closure::<dyn FnMut()>::new(encode);
     pub static CLIPBOARD_CALLBACK: Closure<dyn FnMut()> = Closure::<dyn FnMut()>::new(move || {
-        DOM.with(|dom| dom.copy_to_clipboard());
+        DOM.with(|dom|{
+            let future = dom.copy_to_clipboard().unwrap();
+            let handle = dom.copy_handle();
+            let window = dom.window_handle();
+            spawn_local(async move {
+                future.await.unwrap();
+                Dom::show_copied(&handle);
+
+                console::log_1(&"registering callback".into());
+                HIDE_CLIPBOARD.with(|closure|{
+                    window.set_timeout_with_callback_and_timeout_and_arguments_1(closure.as_ref().unchecked_ref(),500, &handle).unwrap();
+                });
+            })
+        });
     });
 
+    pub static HIDE_CLIPBOARD: Closure<dyn FnMut(Element)> = Closure::<dyn FnMut(Element)>::new(move |dialog| {
+        console::log_1(&"hide clipboard callback".into());
+        Dom::hide_copied(&dialog);
+    });
 }
 
 #[wasm_bindgen]
@@ -69,9 +89,15 @@ struct Dom {
     url: Url,
     clipboard: Clipboard,
     link: RwLock<Option<String>>,
+    copied: Element,
+    window: Window,
 }
 
 impl Dom {
+    fn window_handle(&self) -> Window {
+        self.window.clone()
+    }
+
     fn new() -> Result<Self, ()> {
         let window = web_sys::window().expect("no window found");
         let document = window.document().expect("no document found");
@@ -91,6 +117,11 @@ impl Dom {
         let clipboard = window.navigator().clipboard();
         let (blue, purple, yellow, green) = InputSet::new_set(&document).map_err(|_| ())?;
         let link = RwLock::new(None);
+        let copied = document
+            .get_element_by_id("copier")
+            .expect("no button found")
+            .dyn_into()
+            .map_err(|_| ())?;
         Ok(Self {
             copy_link_button,
             link_button,
@@ -102,6 +133,8 @@ impl Dom {
             url,
             clipboard,
             link,
+            copied,
+            window,
         })
     }
 
@@ -149,19 +182,26 @@ impl Dom {
     fn render_url(&self) {
         self.link_button.set_class_name("button");
         self.copy_link_button.set_class_name("button");
-        self.link_button.set_href(&self.url.href());
     }
 
-    fn copy_to_clipboard(&self) {
-        if let Some(link) = self.link.read().unwrap().as_ref() {
-            use wasm_bindgen_futures::spawn_local;
-            use wasm_bindgen_futures::JsFuture;
-            let future = JsFuture::from(self.clipboard.write_text(link));
-            spawn_local(async move {
-                future.await.unwrap();
-            })
-            // do something to indicate it's been copied to clipboard;
-        }
+    fn copy_to_clipboard(&self) -> Option<JsFuture> {
+        self.link
+            .read()
+            .unwrap()
+            .as_ref()
+            .map(|link| JsFuture::from(self.clipboard.write_text(link)))
+    }
+
+    fn copy_handle(&self) -> Element {
+        self.copied.clone()
+    }
+
+    fn show_copied(copied: &Element) {
+        copied.class_list().add_1("visible").unwrap();
+    }
+
+    fn hide_copied(copied: &Element) {
+        copied.class_list().remove_1("visible").unwrap();
     }
 }
 

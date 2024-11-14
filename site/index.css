@@ -263,6 +263,15 @@ input[type=text]{
   justify-content:center;
 }
 
+.Buttons.end{
+  display: flex;
+  flex-direction:column;
+  position:relative;
+  margin-top: 10px;
+  align-items:center;
+  justify-content:center;
+}
+
 
 
 .MessageBox{
@@ -392,11 +401,9 @@ input[type=text]{
     margin:auto;
 }
 
-
-.pop-up{
+.end-state{
   display:none;
   z-index: 3; /* Sit on top */
-   width: max-content;
   margin: 10px auto;
   padding:10px 18px;
   text-align: center;
@@ -409,14 +416,125 @@ input[type=text]{
   opacity:.8
 }
 
-.pop-up.button{
+.end-state.enabled{
+  display:block;
+  box-sizing:border-box
+}
+
+
+#copier{
+    opacity:0;
+    display:block;
+    position:fixed;
+    bottom: 0;
+    opacity:0;
+    transition: opacity .2s ease-out;
+}
+
+#copier.visible{
+    opacity:1;
+}
+
+.pop-up{
+  z-index: 3; /* Sit on top */
+   width: max-content;
+  margin: 10px auto;
+  padding:10px 18px;
+  text-align: center;
+  background-color:black;
+  color:white;
+  font-size:medium;  
+  border-radius: 6px;
+  font-weight:600;
+}
+
+.pop-up.visible{
+  opacity:0;
+  z-index: 3; /* Sit on top */
+  width: max-content;
+  margin: 10px auto;
+  padding:10px 18px;
+  text-align: center;
+  background-color:black;
+  color:white;
+  font-size:medium;  
+  border-radius: 6px;
+  font-weight:600;
+  transition: opacity .25s ease-out;
+  }
+
+
+dialog[open]{
+  animation: fade-in 0.4s ease-out;
+}
+
+#copied{
+    position: fixed;
+    top: 0;
+}
+
+.end.button{
+   width: max-content;
+  margin: 10px auto;
+  padding:10px 18px;
+  text-align: center;
   background-color:white;
   color:black;
+  font-size:medium;  
+  border-radius: 6px;
+  font-weight:600;
+  transition: display .25s, opacity .25s;
+  opacity:1
+
 }
 
 .pop-up.enabled{
     display:block;
 }
+
+
+
+
+
+
+#endscreen[open]{
+	opacity:1;
+}
+
+#endscreen{
+    opacity: 0;
+    transition:
+	opacity 0.2s ease-out allow-discrete,
+	overlay 0.25s ease-out allow-discrete,
+	display 0.25s ease-out allow-discrete;
+}
+
+@starting-style {
+  #endscreen[open] {
+    opacity: 0;
+  }
+}
+
+#endscreen::backdrop{
+    background-color: rgba(255,255,255,1);
+    opacity:1;
+    transition:all .5s ease-out allow-discrete;
+}
+
+
+#endscreen[open]::backdrop {
+    opacity:1;
+    background-color: rgba(255,255,255,.6);
+}
+
+@starting-style {
+  #endscreen[open]::backdrop {
+    opacity:1;
+    background-color: rgba(255,255,255,100);
+  }
+}
+
+
 
 a{
   text-decoration: none;

@@ -5,11 +5,13 @@ use super::puzzle::Card;
 use super::puzzle::CardState;
 use std::ops::Range;
 
+use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsValue;
 use web_sys::console;
 use web_sys::Document;
 use web_sys::Element;
 use web_sys::HtmlCollection;
+use web_sys::HtmlDialogElement;
 use web_sys::HtmlDivElement;
 
 pub struct Dom {

@@ -23,6 +23,7 @@ async function run() {
 
 
 function main(state){
+
     const initializeCards = (card, card_key) => {
         card.addEventListener("click", () => {
             state.select(card,card_key)
@@ -50,13 +51,7 @@ function main(state){
             cards[i].style.animation = "";
 
         }
-        //cards[0].style.animation = "jump linear .25s";
-        /*
-        for(const i in cards){
-            cards[i].style.animation = "jump linear .25s";
-	    await new Promise(r => setTimeout(r, 250));
-        }
-        */
+
     }
 
     function one_away(){
@@ -70,13 +65,16 @@ function main(state){
     }
 
     async function animate(element){
-        element.style.opacity = 1;
+        element.show();
 	await new Promise(r => setTimeout(r, 2000));
-        element.style.opacity = 0;
+	element.animate([{opacity:1,display:"block"},{opacity:0,display:"none"}],400);
+	await new Promise(r => setTimeout(r, 350));
+        element.close();
     }
 
     function display_won(){
-        document.getElementById("overlay-container").classList.add("enabled");
+	document.getElementById("endscreen").showModal();
+        //document.getElementById("overlay-container").classList.add("enabled");
         document.getElementById("win").classList.add("enabled");
         show_end_buttons();
     }
@@ -89,13 +87,15 @@ function main(state){
     }
 
     function display_lost(){
-        document.getElementById("overlay-container").classList.add("enabled");
+	document.getElementById("endscreen").showModal();
         document.getElementById("lose").classList.add("enabled");
         show_end_buttons();
     }
 
     function hide_overlay(){
-        document.getElementById("overlay-container").classList.remove("enabled");
+
+	document.getElementById("endscreen").close();
+        //document.getElementById("overlay-container").classList.remove("enabled");
         document.getElementById("win").classList.remove("enabled");
         document.getElementById("lose").classList.remove("enabled");
         document.getElementById("again").classList.remove("enabled");
@@ -179,7 +179,9 @@ function main(state){
 		// is this secure,,
 	    url.searchParams.set("game",code);
 	    await window.navigator.clipboard.writeText(url.href);
-	    state.clipboard_copied();
+	    const copied = document.getElementById("copied");
+	    animate(copied);
+	    //state.clipboard_copied();
         });
 
         const back = document.getElementById("back")

@@ -18,7 +18,7 @@ flate2 = "1.0.34"
 wasm-bindgen-futures = "0.4.45"
 [dependencies.web-sys]
 version = "0.3"
-features = ['HtmlDivElement', 'Document', 'Element', 'Window', 'console', 'HtmlCollection', 'CssStyleDeclaration', 'Text', 'DomTokenList', 'EventTarget', 'HtmlInputElement', 'Url', 'Clipboard', 'Navigator', 'HtmlAnchorElement']
+features = ['HtmlDivElement', 'Document', 'Element', 'Window', 'console', 'HtmlCollection', 'CssStyleDeclaration', 'Text', 'DomTokenList', 'EventTarget', 'HtmlInputElement', 'Url', 'Clipboard', 'Navigator', 'HtmlAnchorElement', 'HtmlDialogElement']
 
 
 
