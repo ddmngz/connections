@@ -27,7 +27,6 @@ thread_local! {
                 future.await.unwrap();
                 Dom::show_copied(&handle);
 
-                console::log_1(&"registering callback".into());
                 HIDE_CLIPBOARD.with(|closure|{
                     window.set_timeout_with_callback_and_timeout_and_arguments_1(closure.as_ref().unchecked_ref(),500, &handle).unwrap();
                 });
@@ -36,7 +35,6 @@ thread_local! {
     });
 
     pub static HIDE_CLIPBOARD: Closure<dyn FnMut(Element)> = Closure::<dyn FnMut(Element)>::new(move |dialog| {
-        console::log_1(&"hide clipboard callback".into());
         Dom::hide_copied(&dialog);
     });
 }
@@ -83,7 +81,7 @@ struct Dom {
     purple: InputSet,
     yellow: InputSet,
     green: InputSet,
-    button: Element,
+    generate_button: Element,
     link_button: HtmlAnchorElement,
     copy_link_button: Element,
     url: Url,
@@ -101,7 +99,7 @@ impl Dom {
     fn new() -> Result<Self, ()> {
         let window = web_sys::window().expect("no window found");
         let document = window.document().expect("no document found");
-        let button = document
+        let generate_button = document
             .get_element_by_id("submit")
             .expect("no button found");
         let link_button = get_anchor_elem(
@@ -129,7 +127,7 @@ impl Dom {
             purple,
             yellow,
             green,
-            button,
+            generate_button,
             url,
             clipboard,
             link,
@@ -160,7 +158,7 @@ impl Dom {
 
     fn init(&self) {
         SUBMIT_CALLBACK.with(|closure| {
-            self.button
+            self.generate_button
                 .add_event_listener_with_callback("click", closure.as_ref().unchecked_ref())
                 .expect("listener error")
         });
@@ -176,11 +174,12 @@ impl Dom {
         let url = format!("?game={}", code);
         self.url.set_search(&url);
         *self.link.write().unwrap() = Some(self.url.href());
-        console::log_1(&code.into())
+        self.link_button.set_href(&self.url.href());
     }
 
     fn render_url(&self) {
         self.link_button.set_class_name("button");
+
         self.copy_link_button.set_class_name("button");
     }
 
