@@ -5,7 +5,7 @@ mod puzzle;
 use board::Board;
 use board::SelectionFailiure;
 use color::Color;
-use dom::Dom;
+use dom::old_dom::Dom;
 use puzzle::Card;
 pub use puzzle::ConnectionPuzzle;
 pub use puzzle::ConnectionSet;
@@ -23,7 +23,6 @@ pub struct GameState {
     successes: u8,
     board: Board,
     prev_attempts: Vec<HashSet<PuzzleKey>>,
-    dom: Dom,
 }
 
 #[wasm_bindgen]
@@ -153,7 +152,7 @@ impl GameState {
         elems.into_boxed_slice()
     }
 
-    pub fn from_code(code: String) -> Result<Self, TranscodingError> {
+    pub fn from_code(code: &str) -> Result<Self, TranscodingError> {
         let puzzle = ConnectionPuzzle::decode(&code)?;
         Ok(Self::new(puzzle))
     }
