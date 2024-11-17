@@ -12,6 +12,7 @@ use flate2::write::GzEncoder;
 use serde::{Deserialize, Serialize};
 use std::array;
 use std::marker::PhantomData;
+use thiserror::Error;
 
 use flate2::write::GzDecoder;
 
@@ -21,7 +22,7 @@ use std::io::Write;
 #[allow(unused_imports)]
 use web_sys::console;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ConnectionPuzzle {
     yellow: ConnectionSet<Yellow>,
     blue: ConnectionSet<Blue>,
@@ -29,7 +30,7 @@ pub struct ConnectionPuzzle {
     green: ConnectionSet<Green>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ConnectionSet<Color: AsColor> {
     pub theme: String,
     pub words: [String; 4],
@@ -47,6 +48,14 @@ impl<C: AsColor> ConnectionSet<C> {
         }
     }
 
+    const fn empty_set() -> Self {
+        Self {
+            theme: String::new(),
+            words: [const { String::new() }; 4],
+            color: PhantomData,
+        }
+    }
+
     pub fn theme(&self) -> &str {
         &self.theme
     }
@@ -59,7 +68,25 @@ impl<C: AsColor> ConnectionSet<C> {
     }
 }
 
+const fn empty_pair() -> (String, [String; 4]) {
+    (String::new(), [const { String::new() }; 4])
+}
+
 impl ConnectionPuzzle {
+    pub const fn empty() -> Self {
+        let yellow = ConnectionSet::empty_set();
+        let blue = ConnectionSet::empty_set();
+        let purple = ConnectionSet::empty_set();
+        let green = ConnectionSet::empty_set();
+
+        Self {
+            yellow,
+            blue,
+            purple,
+            green,
+        }
+    }
+
     pub fn new(
         yellow: (&str, [&str; 4]),
         blue: (&str, [&str; 4]),
@@ -131,10 +158,13 @@ impl ConnectionPuzzle {
 }
 
 #[wasm_bindgen]
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum TranscodingError {
+    #[error("couldn't decode")]
     Base64,
+    #[error("couldn't decompress")]
     Gzip,
+    #[error("couldn't deserialize")]
     Postcard,
 }
 

@@ -1,6 +1,6 @@
 mod board;
 pub mod color;
-mod dom;
+pub mod dom;
 mod puzzle;
 use board::Board;
 use board::SelectionFailiure;
@@ -18,6 +18,7 @@ use web_sys::console;
 use web_sys::HtmlDivElement;
 
 #[wasm_bindgen]
+#[derive(Debug)]
 pub struct GameState {
     mistakes: u8,
     successes: u8,
@@ -37,8 +38,9 @@ impl GameState {
     }
 
     pub fn render_cards(&mut self) {
-        self.dom
+        /*self.dom
             .render_cards(&self.board, self.board.matched_cards.len() * 4);
+        */
     }
 
     fn default() -> Self {
@@ -46,31 +48,17 @@ impl GameState {
         Self::new(puzzle)
     }
 
-    pub fn select(&mut self, card: HtmlDivElement, card_id: usize) -> bool {
+    pub fn select(&mut self, card_id: usize) -> Result<usize, usize> {
         if self.board.select(card_id).is_err() {
-            return false;
-        };
-        self.dom.toggle_select(&card);
-        //self.dom.rerender_selected_card(index, state);
-
-        if self.board.selection.is_empty() {
-            self.dom.disable_deselect();
-            self.dom.disable_submit();
+            Err(0)
         } else {
-            // trying to only rerender when necessary
-            match self.board.selection.len() {
-                1 => self.dom.enable_deselect(),
-                3 => self.dom.disable_submit(),
-                4 => self.dom.enable_submit(),
-                _ => {}
-            }
+            Ok(self.board.selection.len())
         }
-        true
     }
 
     fn record_mistake(&mut self) {
         self.mistakes += 1;
-        self.dom.deactivate_dot();
+        //self.dom.deactivate_dot();
     }
 
     pub fn check_selection(&mut self) -> Result<SelectionSuccess, GameFailiure> {
@@ -90,12 +78,14 @@ impl GameState {
             Ok(color) => {
                 self.board.matched_cards.insert(color);
                 self.successes += 1;
-                self.dom.disable_deselect();
+                //self.dom.disable_deselect();
+                /*
                 self.dom
                     .render_cards(&self.board, (self.board.matched_cards.len() - 1) * 4);
                 let (theme, words) = self.match_set_strings(color);
                 self.dom.render_match(color, theme, &words);
                 //self.dom.render_cards(&self.board);
+                */
                 if almost_won {
                     Ok(Won)
                 } else {
@@ -132,9 +122,11 @@ impl GameState {
     pub fn clear_selection(&mut self) {
         self.board.clear_selection();
         //self.render_cards();
+        /*
         self.dom.clear_selections();
         self.dom.disable_deselect();
         self.dom.disable_submit();
+        */
     }
 
     pub fn get_selection_indices(&self) -> Box<[u32]> {
@@ -162,7 +154,7 @@ impl GameState {
         self.successes = 0;
         self.board.reset();
         self.prev_attempts.clear();
-        self.dom.reset();
+        //self.dom.reset();
         self.render_cards();
     }
 
@@ -172,6 +164,11 @@ impl GameState {
 }
 
 impl GameState {
+    pub fn empty() -> GameState {
+        let puzzle = ConnectionPuzzle::empty();
+        GameState::new(puzzle)
+    }
+
     pub fn new(puzzle: ConnectionPuzzle) -> Self {
         let board = Board::new(puzzle);
         let prev_attempts = Vec::new();
@@ -181,7 +178,6 @@ impl GameState {
             successes: 0,
             board,
             prev_attempts,
-            dom,
         }
     }
 

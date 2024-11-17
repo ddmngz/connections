@@ -16,9 +16,7 @@ serde = {version = "1.0.214", features = ["derive"], default-features=false}
 base64 = "0.22.1"
 flate2 = "1.0.34"
 wasm-bindgen-futures = "0.4.45"
+thiserror = "2.0.3"
 [dependencies.web-sys]
 version = "0.3"
-features = ['HtmlDivElement', 'Document', 'Element', 'Window', 'console', 'HtmlCollection', 'CssStyleDeclaration', 'Text', 'DomTokenList', 'EventTarget', 'HtmlInputElement', 'Url', 'Clipboard', 'Navigator', 'HtmlAnchorElement', 'HtmlDialogElement']
-
-
-
+features = ['HtmlDivElement', 'Document', 'Element', 'Window', 'console', 'HtmlCollection', 'CssStyleDeclaration', 'Text', 'DomTokenList', 'EventTarget', 'HtmlInputElement', 'Url', 'Clipboard', 'Navigator', 'HtmlAnchorElement', 'HtmlDialogElement', 'UrlSearchParams']

@@ -1,4 +1,4 @@
-import init, {GameState, start_state, SelectionSuccess, GameFailiure, TranscodingError} from './pkg/nyt_connections.js';
+import init, {GameState, start_state, SelectionSuccess, GameFailiure, TranscodingError, start_game} from './pkg/nyt_connections.js';
 
 
 
@@ -256,5 +256,6 @@ addEventListener("load", (_) => {
 });
 
 await run();
-entry_point();
+//entry_point();
+start_game();
 

@@ -1,6 +1,10 @@
+#[derive(Debug)]
 pub struct Yellow {}
+#[derive(Debug)]
 pub struct Blue {}
+#[derive(Debug)]
 pub struct Purple {}
+#[derive(Debug)]
 pub struct Green {}
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]

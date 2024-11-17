@@ -1,5 +1,4 @@
 use rand::prelude::SliceRandom;
-use rand::rngs::ThreadRng;
 use std::collections::HashSet;
 
 use super::color::Color;
@@ -9,6 +8,7 @@ use super::ConnectionPuzzle;
 #[allow(unused_imports)]
 use web_sys::console;
 
+#[derive(Debug)]
 pub struct Board {
     pub puzzle: ConnectionPuzzle,
     pub selection: HashSet<PuzzleKey>,
@@ -16,7 +16,6 @@ pub struct Board {
     // ideally this would be in sets of 4
     pub matched_cards: HashSet<Color>,
     pub order: [PuzzleKey; 16],
-    rng: ThreadRng,
 }
 
 pub enum SelectState {
@@ -31,6 +30,19 @@ pub enum SelectionFailiure {
 }
 
 impl Board {
+    pub fn empty() -> Self {
+        let puzzle = ConnectionPuzzle::empty();
+        let selection = HashSet::new();
+        let matched_cards = HashSet::new();
+        let order = puzzle.all_keys();
+        Self {
+            puzzle,
+            selection,
+            matched_cards,
+            order,
+        }
+    }
+
     pub fn reset(&mut self) {
         self.selection.clear();
         self.matched_cards.clear();
@@ -100,7 +112,8 @@ impl Board {
 
     pub fn shuffle(&mut self) {
         let starting_point = self.matched_cards.len() * 4;
-        self.order[starting_point..].shuffle(&mut self.rng);
+        let mut rng = rand::thread_rng();
+        self.order[starting_point..].shuffle(&mut rng);
     }
 
     pub fn new(puzzle: ConnectionPuzzle) -> Self {
@@ -114,7 +127,6 @@ impl Board {
             selection,
             matched_cards,
             order,
-            rng,
         }
     }
 
