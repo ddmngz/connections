@@ -1,4 +1,3 @@
-use crate::game::color::AsColor;
 use crate::game::color::Color;
 use crate::game::ConnectionPuzzle;
 use crate::game::ConnectionSet;
@@ -219,7 +218,7 @@ impl InputSet {
         Ok((blue, purple, yellow, green))
     }
 
-    fn set_with_set<T: AsColor>(&self, set: &ConnectionSet<T>) {
+    fn set_with_set(&self, set: &ConnectionSet) {
         self.theme_input.set_value(&set.theme);
         use std::iter::zip;
         for (input, word) in zip(&self.other_inputs, &set.words) {

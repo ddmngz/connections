@@ -3,10 +3,10 @@ pub mod color;
 pub mod dom;
 mod puzzle;
 use board::Board;
+use board::Card;
+use board::Selection;
 use board::SelectionFailiure;
 use color::Color;
-use dom::old_dom::Dom;
-use puzzle::Card;
 pub use puzzle::ConnectionPuzzle;
 pub use puzzle::ConnectionSet;
 use puzzle::PuzzleKey;
@@ -23,7 +23,7 @@ pub struct GameState {
     mistakes: u8,
     successes: u8,
     board: Board,
-    prev_attempts: Vec<HashSet<PuzzleKey>>,
+    prev_attempts: Vec<Selection>,
 }
 
 #[wasm_bindgen]
@@ -34,7 +34,7 @@ pub fn start_state() -> GameState {
 #[wasm_bindgen]
 impl GameState {
     pub fn puzzle_code(&self) -> String {
-        self.board.puzzle.encode()
+        self.board.encode()
     }
 
     pub fn render_cards(&mut self) {
@@ -74,9 +74,8 @@ impl GameState {
 
         let almost_lost = self.mistakes == 3;
 
-        match self.board.check_selection() {
+        match self.board.test_selection() {
             Ok(color) => {
-                self.board.matched_cards.insert(color);
                 self.successes += 1;
                 //self.dom.disable_deselect();
                 /*
@@ -120,7 +119,7 @@ impl GameState {
     }
 
     pub fn clear_selection(&mut self) {
-        self.board.clear_selection();
+        self.board.deselect_all();
         //self.render_cards();
         /*
         self.dom.clear_selections();
@@ -129,6 +128,7 @@ impl GameState {
         */
     }
 
+    /*
     pub fn get_selection_indices(&self) -> Box<[u32]> {
         //let card_index = card_id - (self.board.matched_cards.len() * 4);
         let selection: Vec<PuzzleKey> = self.board.selection.iter().cloned().collect();
@@ -143,6 +143,7 @@ impl GameState {
         }
         elems.into_boxed_slice()
     }
+    */
 
     pub fn from_code(code: &str) -> Result<Self, TranscodingError> {
         let puzzle = ConnectionPuzzle::decode(&code)?;
@@ -164,6 +165,13 @@ impl GameState {
 }
 
 impl GameState {
+    /*
+    pub const fn const_empty() -> GameState {
+        let puzzle = ConnectionPuzzle::empty();
+        GameState::new(puzzle)
+    }
+    */
+
     pub fn empty() -> GameState {
         let puzzle = ConnectionPuzzle::empty();
         GameState::new(puzzle)
@@ -172,7 +180,6 @@ impl GameState {
     pub fn new(puzzle: ConnectionPuzzle) -> Self {
         let board = Board::new(puzzle);
         let prev_attempts = Vec::new();
-        let dom = Dom::init();
         Self {
             mistakes: 0,
             successes: 0,
@@ -181,32 +188,12 @@ impl GameState {
         }
     }
 
-    pub fn get_card(&self, index: usize) -> Card {
-        self.board.get_card(index)
-    }
-
     // string for matched set
-    fn match_set_strings(&self, color: Color) -> (&str, String) {
-        match color {
-            Color::Yellow => (
-                self.board.puzzle.yellow().theme(),
-                self.board.puzzle.yellow().words(),
-            ),
-            Color::Blue => (
-                self.board.puzzle.blue().theme(),
-                self.board.puzzle.blue().words(),
-            ),
-            Color::Purple => (
-                self.board.puzzle.purple().theme(),
-                self.board.puzzle.purple().words(),
-            ),
-            Color::Green => (
-                self.board.puzzle.green().theme(),
-                self.board.puzzle.green().words(),
-            ),
-        }
+    fn matched_set_strings(&self, color: Color) -> (&str, String) {
+        self.board.matched_set_strings(color)
     }
 }
+
 #[wasm_bindgen]
 #[repr(u8)]
 pub enum SelectionSuccess {

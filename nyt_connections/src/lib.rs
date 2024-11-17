@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate yoke;
+
 mod form;
 mod game;
 use game::dom;

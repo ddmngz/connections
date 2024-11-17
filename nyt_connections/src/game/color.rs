@@ -7,12 +7,13 @@ pub struct Purple {}
 #[derive(Debug)]
 pub struct Green {}
 
+#[repr(u8)]
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum Color {
-    Yellow,
-    Blue,
-    Purple,
-    Green,
+    Yellow = 0,
+    Blue = 1,
+    Purple = 2,
+    Green = 3,
 }
 
 impl AsRef<str> for Color {

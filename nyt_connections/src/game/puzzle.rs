@@ -8,43 +8,84 @@ use super::color::Purple;
 use super::color::Yellow;
 use super::Board;
 use base64::{engine::general_purpose::URL_SAFE, Engine as _};
+use flate2::write::GzDecoder;
 use flate2::write::GzEncoder;
+use flate2::Compression;
 use serde::{Deserialize, Serialize};
 use std::array;
-use std::marker::PhantomData;
-use thiserror::Error;
-
-use flate2::write::GzDecoder;
-
-use flate2::Compression;
 use std::io::Write;
+use std::marker::PhantomData;
+use std::ops::Deref;
+use thiserror::Error;
 
 #[allow(unused_imports)]
 use web_sys::console;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ConnectionPuzzle {
-    yellow: ConnectionSet<Yellow>,
-    blue: ConnectionSet<Blue>,
-    purple: ConnectionSet<Purple>,
-    green: ConnectionSet<Green>,
+    yellow: YellowSet,
+    blue: BlueSet,
+    purple: PurpleSet,
+    green: GreenSet,
 }
 
+#[repr(transparent)]
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ConnectionSet<Color: AsColor> {
+struct BlueSet(ConnectionSet);
+
+#[repr(transparent)]
+#[derive(Serialize, Deserialize, Debug)]
+struct YellowSet(ConnectionSet);
+
+#[repr(transparent)]
+#[derive(Serialize, Deserialize, Debug)]
+struct PurpleSet(ConnectionSet);
+
+#[repr(transparent)]
+#[derive(Serialize, Deserialize, Debug)]
+struct GreenSet(ConnectionSet);
+
+impl Deref for BlueSet {
+    type Target = ConnectionSet;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+impl Deref for PurpleSet {
+    type Target = ConnectionSet;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+impl Deref for GreenSet {
+    type Target = ConnectionSet;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+impl Deref for YellowSet {
+    type Target = ConnectionSet;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+pub struct ConnectionSet {
     pub theme: String,
     pub words: [String; 4],
-    color: PhantomData<Color>,
 }
 
-impl<C: AsColor> ConnectionSet<C> {
+impl ConnectionSet {
     fn new(theme: &str, words: [&str; 4]) -> Self {
         let words: [String; 4] = array::from_fn(|index| String::from(words[index]));
-        let color = PhantomData;
         Self {
             theme: theme.into(),
             words,
-            color,
         }
     }
 
@@ -52,7 +93,6 @@ impl<C: AsColor> ConnectionSet<C> {
         Self {
             theme: String::new(),
             words: [const { String::new() }; 4],
-            color: PhantomData,
         }
     }
 
@@ -68,16 +108,33 @@ impl<C: AsColor> ConnectionSet<C> {
     }
 }
 
+impl std::ops::Index<usize> for ConnectionSet {
+    type Output = str;
+
+    fn index(&self, index: usize) -> &str {
+        self.words[index].as_str()
+    }
+}
+
+impl std::ops::Index<PuzzleIndex> for ConnectionPuzzle {
+    type Output = str;
+
+    fn index(&self, index: PuzzleIndex) -> &str {
+        let set = self.by_color(index.color());
+        index.word(set)
+    }
+}
+
 const fn empty_pair() -> (String, [String; 4]) {
     (String::new(), [const { String::new() }; 4])
 }
 
 impl ConnectionPuzzle {
     pub const fn empty() -> Self {
-        let yellow = ConnectionSet::empty_set();
-        let blue = ConnectionSet::empty_set();
-        let purple = ConnectionSet::empty_set();
-        let green = ConnectionSet::empty_set();
+        let yellow = YellowSet(ConnectionSet::empty_set());
+        let blue = BlueSet(ConnectionSet::empty_set());
+        let purple = PurpleSet(ConnectionSet::empty_set());
+        let green = GreenSet(ConnectionSet::empty_set());
 
         Self {
             yellow,
@@ -93,10 +150,10 @@ impl ConnectionPuzzle {
         purple: (&str, [&str; 4]),
         green: (&str, [&str; 4]),
     ) -> Self {
-        let yellow = ConnectionSet::new(yellow.0, yellow.1);
-        let blue = ConnectionSet::new(blue.0, blue.1);
-        let purple = ConnectionSet::new(purple.0, purple.1);
-        let green = ConnectionSet::new(green.0, green.1);
+        let yellow = YellowSet(ConnectionSet::new(yellow.0, yellow.1));
+        let blue = BlueSet(ConnectionSet::new(blue.0, blue.1));
+        let purple = PurpleSet(ConnectionSet::new(purple.0, purple.1));
+        let green = GreenSet(ConnectionSet::new(green.0, green.1));
 
         Self {
             yellow,
@@ -140,20 +197,27 @@ impl ConnectionPuzzle {
         PuzzleKey::new(color, index % 4)
     }
 
-    pub const fn yellow(&self) -> &ConnectionSet<Yellow> {
+    pub fn by_color(&self, color: Color) -> &ConnectionSet {
+        match color {
+            Color::Blue => &self.blue,
+            Color::Green => &self.green,
+            Color::Purple => &self.purple,
+            Color::Yellow => &self.yellow,
+        }
+    }
+
+    pub fn yellow(&self) -> &ConnectionSet {
         &self.yellow
     }
 
-    pub const fn blue(&self) -> &ConnectionSet<Blue> {
+    pub fn blue(&self) -> &ConnectionSet {
         &self.blue
     }
-
-    pub const fn purple(&self) -> &ConnectionSet<Purple> {
-        &self.purple
-    }
-
-    pub const fn green(&self) -> &ConnectionSet<Green> {
+    pub fn green(&self) -> &ConnectionSet {
         &self.green
+    }
+    pub fn purple(&self) -> &ConnectionSet {
+        &self.purple
     }
 }
 
@@ -167,6 +231,30 @@ pub enum TranscodingError {
     #[error("couldn't deserialize")]
     Postcard,
 }
+
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Yokeable)]
+pub struct PuzzleRef<'a> {
+    index: PuzzleIndex,
+    set: &'a ConnectionSet,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+pub struct PuzzleIndex {
+    color: Color,
+    word_index: usize,
+}
+
+impl PuzzleIndex {
+    pub const fn color(&self) -> Color {
+        self.color
+    }
+
+    pub fn word<'a>(&self, set: &'a ConnectionSet) -> &'a str {
+        set.words[self.word_index].as_ref()
+    }
+}
+
+impl PuzzleRef<'_> {}
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct PuzzleKey {
@@ -185,92 +273,6 @@ impl Default for PuzzleKey {
         Self {
             color: Color::Yellow,
             word_index: 0,
-        }
-    }
-}
-
-#[derive(PartialEq, Eq)]
-pub enum CardState {
-    Selected,
-    Normal,
-    Matched,
-}
-
-pub struct Card<'a> {
-    pub color: Color,
-    pub word: &'a str,
-    pub theme: &'a str,
-    pub state: CardState,
-}
-
-impl<'a> Card<'a> {
-    pub fn from_key(key: &PuzzleKey, board: &'a Board) -> Self {
-        let (word, theme) = match key.color {
-            Color::Yellow => {
-                let set = board.puzzle.yellow();
-                (&set.words[key.word_index], &set.theme)
-            }
-            Color::Blue => {
-                let set = board.puzzle.blue();
-                (&set.words[key.word_index], &set.theme)
-            }
-            Color::Green => {
-                let set = board.puzzle.green();
-                (&set.words[key.word_index], &set.theme)
-            }
-            Color::Purple => {
-                let set = board.puzzle.purple();
-                (&set.words[key.word_index], &set.theme)
-            }
-        };
-
-        let state = if board.selection.contains(key) {
-            CardState::Selected
-        } else if board.matched_cards.contains(&key.color) {
-            CardState::Matched
-        } else {
-            CardState::Normal
-        };
-
-        Self {
-            color: key.color,
-            word,
-            theme,
-            state,
-        }
-    }
-
-    pub fn background_color(&self) -> &str {
-        match self.state {
-            CardState::Normal => "var(--connections-light-beige)",
-            CardState::Selected => "var(--connections-darker-beige)",
-            //panic!("tried to render matched card")
-            CardState::Matched => match self.color {
-                Color::Yellow => "var(--connections-yellow)",
-                Color::Green => "var(--connections-green)",
-                Color::Blue => "var(--connections-blue)",
-                Color::Purple => "var(--connections-maroon)",
-            },
-        }
-    }
-
-    pub fn text_color(&self) -> &str {
-        match self.state {
-            CardState::Selected => "white",
-            _ => "black",
-        }
-    }
-
-    pub fn class_name(&self) -> &str {
-        match self.state {
-            CardState::Normal => "card",
-            CardState::Selected => "selected",
-            CardState::Matched => match self.color {
-                Color::Yellow => "matched_yellow",
-                Color::Green => "matched_green",
-                Color::Blue => "matched_blue",
-                Color::Purple => "matched_purple",
-            },
         }
     }
 }

@@ -1,4 +1,3 @@
-pub mod old_dom;
 use crate::game::puzzle::PuzzleKey;
 use crate::game::Board;
 use crate::game::GameState;
