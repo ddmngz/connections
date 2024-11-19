@@ -1,8 +1,15 @@
+mod button;
+mod cards;
+
+mod callbacks;
+mod element_ops;
+mod misc_objects;
 use crate::game::puzzle::PuzzleKey;
 use crate::game::Board;
+use crate::game::GameFailiure;
 use crate::game::GameState;
+use crate::game::SelectionSuccess;
 use crate::game::TranscodingError;
-
 use std::collections::HashSet;
 use std::marker::PhantomData;
 use std::mem::MaybeUninit;
@@ -12,9 +19,13 @@ use std::sync::RwLock;
 use thiserror::Error;
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen_futures::spawn_local;
+
+use wasm_bindgen_futures::future_to_promise;
+use wasm_bindgen_futures::JsFuture;
 use web_sys::{
-    console, Document, DomTokenList, Element, HtmlCollection, HtmlDivElement, HtmlElement, Url,
-    UrlSearchParams, Window,
+    console, Clipboard, Document, DomTokenList, Element, HtmlCollection, HtmlDialogElement,
+    HtmlDivElement, HtmlElement, Url, UrlSearchParams, Window,
 };
 
 static GAME_STATE: LazyLock<RwLock<GameState>> = LazyLock::new(|| RwLock::new(GameState::empty()));
@@ -56,7 +67,17 @@ fn init_site() -> Result<(), ()> {
         deselect_button.class_list(),
     );
     /*
-    setup_submit(submit_button)?;
+    button: HtmlElement,
+    already_guessed: HtmlDialogElement,
+    one_away: HtmlDialogElement,
+    won_text: DomTokenList,
+    lost_text: DomTokenList,
+    end_screen: HtmlDialogElement,
+    selection: HtmlCollection,
+    */
+
+    setup_submit(submit_button.dyn_into().unwrap(), &document)?;
+    /*
     setup_deselect(deselect_button)?;
     setup_try_again()?;
     setup_share()?;
@@ -69,7 +90,7 @@ fn init_site() -> Result<(), ()> {
 fn setup_onload(document: &Document) -> Result<(), ()> {
     let element = document.document_element().ok_or(())?;
     let closure: Closure<dyn FnMut()> = Closure::new(move || {
-        element.remove_attribute("hidden");
+        element.remove_attribute("hidden").unwrap();
     });
     document.set_onload(Some(closure.as_ref().unchecked_ref()));
     Ok(())
@@ -77,7 +98,7 @@ fn setup_onload(document: &Document) -> Result<(), ()> {
 
 // i can make select return the number of selections
 fn setup_cards(document: &Document, submit_class: DomTokenList, deselect_class: DomTokenList) {
-    let cards = CollectionVec::new(&document.get_elements_by_class_name("card"));
+    let cards = HtmlCollectionVec::new(&document.get_elements_by_class_name("card"));
     for (dom_index, card) in cards.into_iter().enumerate() {
         setup_card(
             card.dyn_into().unwrap(),
@@ -86,21 +107,6 @@ fn setup_cards(document: &Document, submit_class: DomTokenList, deselect_class: 
             submit_class.clone(),
         )
     }
-}
-
-fn setup_card(
-    card: HtmlDivElement,
-    dom_index: usize,
-    deselect_class: DomTokenList,
-    submit_class: DomTokenList,
-) {
-    let list = card.class_list();
-    let closure: Closure<dyn FnMut()> =
-        Closure::new(move || on_card_click(&list, &dom_index, &deselect_class, &submit_class));
-
-    card.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref())
-        .unwrap();
-    closure.forget();
 }
 
 fn on_card_click(
@@ -120,7 +126,7 @@ fn on_card_click(
         1 => {
             deselect_class.remove_1("hidden").unwrap();
         }
-        2 => {}
+        2 => (),
         3 => {
             submit_class.add_1("hidden").unwrap();
         }
@@ -135,8 +141,44 @@ fn on_card_click(
     card_class.toggle("selected").unwrap();
 }
 
-fn setup_submit(button: Element) -> Result<(), ()> {
-    todo!();
+fn setup_submit(button: HtmlElement, document: &Document) -> Result<(), ()> {
+    let already_guessed: HtmlDialogElement = document
+        .get_element_by_id("already")
+        .unwrap()
+        .dyn_into()
+        .unwrap();
+    let one_away: HtmlDialogElement = document
+        .get_element_by_id("away")
+        .unwrap()
+        .dyn_into()
+        .unwrap();
+
+    let end_screen: HtmlDialogElement = document
+        .get_element_by_id("endscreen")
+        .unwrap()
+        .dyn_into()
+        .unwrap();
+
+    let selection: HtmlCollection = document.get_elements_by_class_name("selected");
+
+    let won_text = document.get_element_by_id("win").unwrap().class_list();
+    let lost_text = document.get_element_by_id("lose").unwrap().class_list();
+
+    let closure = Closure::<dyn FnMut()>::new(move || {
+        on_submit(
+            &button,
+            &already_guessed,
+            &one_away,
+            &won_text,
+            &lost_text,
+            &end_screen,
+            &selection,
+        );
+    });
+
+    closure.forget();
+
+    Ok(())
 }
 
 fn setup_deselect(button: Element) -> Result<(), ()> {
@@ -159,93 +201,102 @@ fn setup_edit_me() -> Result<(), ()> {
     todo!();
 }
 
-fn on_submit() {
+async fn jump_selection(selection: &HtmlCollectionVec) {
+    let animations = [
+        "jump linear .25s",
+        "jump2 linear .25s",
+        "jump3 linear .25s",
+        "jump4 linear .25s",
+    ];
+    for (card, animation) in selection.iter().zip(animations) {
+        card.style().remove_property("animation");
+        card.style().set_property("animation", animation);
+    }
+}
+
+fn shake_selection(selection: HtmlCollectionVec) {
+    for card in selection {
+        card.style().remove_property("animation");
+        card.style().set_property("animation", "shake linear .25s");
+    }
+}
+
+fn done(end_text: &DomTokenList, end_screen: &HtmlDialogElement) {
+    end_screen.show_modal();
+    end_text.add_1("enabled");
+
     /*
-    *
-           const classList = submit.classList;
-           if(classList.contains("hidden")){
-               return
-           }
-           classList.add("hidden");
-               try{
-                   await jump_selection();
-                   if(state.check_selection() == SelectionSuccess.Won){
-                       display_won();
-                   }
-               }catch (exceptionVar){
-               //console.log(GameFailiure[exceptionVar]);
-                   switch (exceptionVar){
-                       case GameFailiure.Mismatch: // MISMATCH
-                           shake_selection();
-                           break;
-                       case GameFailiure.NotEnough: // NOT ENOUGH
-                           shake_selection();
-                           break;
-                       case GameFailiure.OneAway: //One Away
-                           shake_selection();
-                           one_away();
-                           break;
-                       case GameFailiure.Lost:
-                           shake_selection();
-                           display_lost();
-                           break;
-                       case GameFailiure.AlreadyTried:
-                           already_guessed();
-                   }
-               }finally{
-               submit.classList.remove("hidden");
-           }
+     * might need this
+    function show_end_buttons(){
+        document.getElementById("again").classList.add("enabled");
+        document.getElementById("share").classList.add("enabled");
+        document.getElementById("back").classList.add("enabled");
+        document.getElementById("edit-me").classList.add("enabled");
+    }
     */
+}
+
+fn on_submit(
+    button: &HtmlElement,
+    already_guessed: &HtmlDialogElement,
+    one_away: &HtmlDialogElement,
+    won_text: &DomTokenList,
+    lost_text: &DomTokenList,
+    end_screen: &HtmlDialogElement,
+    selection: &HtmlCollection,
+) {
+    button.class_list().add_1("hidden").unwrap();
+    let selection = HtmlCollectionVec::new(&selection);
+    jump_selection(&selection);
+    match GAME_STATE.write().unwrap().check_selection() {
+        Ok(SelectionSuccess::Won) => done(won_text, end_screen),
+        Ok(_) => (),
+        Err(GameFailiure::Mismatch | GameFailiure::NotEnough) => shake_selection(selection),
+        Err(GameFailiure::OneAway) => animate_modal(one_away),
+        Err(GameFailiure::Lost) => done(lost_text, end_screen),
+        Err(GameFailiure::AlreadyTried) => animate_modal(already_guessed),
+    };
+    button.class_list().remove_1("hidden").unwrap();
 }
 
 fn on_deselect() {
-    /*
-            if(deselect.classList.contains("hidden")){
-                return
-            }
-                state.clear_selection();
-    */
+    GAME_STATE.write().unwrap().clear_selection();
 }
 
-fn on_try_again() {
-
-    /*
-    *  state.start_over();
-           setup_cards();
-               hide_overlay();
-
-    *
-    */
+fn on_try_again(
+    document: &Document,
+    submit_class: DomTokenList,
+    deselect_class: DomTokenList,
+    end_screen: HtmlDialogElement,
+) {
+    GAME_STATE.write().unwrap().start_over();
+    setup_cards(document, submit_class, deselect_class);
+    end_screen.close();
 }
 
-fn on_share() {
-    /*
-    *
-    *const code = state.puzzle_code();
-           const url = new URL(document.location.href);
-           // is this secure,,
-           url.searchParams.set("game",code);
-           await window.navigator.clipboard.writeText(url.href);
-           const copied = document.getElementById("copied");
-           animate(copied);
-
-    *
-    */
+fn animate_modal(element: &HtmlDialogElement) {
+    element.style().remove_property("animation");
+    element
+        .style()
+        .set_property("animation", "show_modal 5s ease-in");
 }
 
-fn on_edit_me() {
-    /*
-    *	    const code = state.puzzle_code();
-           console.log(code);
-           const url = new URL("../",document.location.href);
-           url.searchParams.delete("game");
-           url.searchParams.set("puzzle",code);
-           console.log(url);
-               self.window.location.assign(url);
+async fn on_share(url: Url, clipboard: Clipboard, copied: HtmlDialogElement) {
+    let code = GAME_STATE.read().unwrap().puzzle_code();
+    url.search_params().set("game", &code);
 
-    *
-    *
-    */
+    let future = JsFuture::from(clipboard.write_text(&url.href()));
+    future.await.unwrap();
+    animate_modal(&copied);
+}
+
+fn on_edit_me(cur_location: &str, window: Window) {
+    let code = GAME_STATE.read().unwrap().puzzle_code();
+    let url = Url::new_with_base("..", cur_location).unwrap();
+    let params = url.search_params();
+    params.delete("game");
+    params.set("puzzle", &code);
+    window.location().assign(&url.href()).unwrap();
 }
 
 enum PopUp {
@@ -265,20 +316,6 @@ fn get_code() -> Result<String, ()> {
 
 fn show_error(kind: PopUp) {}
 
-/*
-fn _site() -> Result<&'static mut GameState, InitError> {
-    let code = get_code();
-    let state = GameState::from_code(&code)?;
-    let state = unsafe { GAME_STATE.set(state) };
-    init_dom()?;
-    Ok(state)
-}
-*/
-
-fn init_dom() -> Result<(), InitError> {
-    todo!();
-}
-
 #[derive(Error, Debug)]
 pub enum InitError {
     #[error(transparent)]
@@ -287,59 +324,6 @@ pub enum InitError {
     Dom(),
 }
 
-/*
-fn init_game(code: &str) -> Result<(), TranscodingError> {
-    let state = GameState::from_code(code)?;
-    unsafe { GAME_STATE = Some(state) };
-    // add event listener for each card which uses a callback that references GAME_STATE
-    todo!();
-    // init state
-}
-*/
-
 pub enum ConnectionsError {
     NotInit,
-}
-
-struct CollectionVec {
-    array: Vec<Element>,
-}
-
-impl CollectionVec {
-    fn new(collection: &HtmlCollection) -> Self {
-        let mut array = Vec::new();
-        let mut i = 0;
-        while let Some(elem) = collection.get_with_index(i) {
-            array.push(elem);
-            i += 1;
-        }
-        Self { array }
-    }
-
-    fn last(&self) -> Option<&Element> {
-        self.array.last()
-    }
-}
-
-impl std::ops::Index<usize> for CollectionVec {
-    type Output = Element;
-    fn index(&self, at: usize) -> &Element {
-        &self.array[at]
-    }
-}
-
-impl std::ops::Index<Range<usize>> for CollectionVec {
-    type Output = [Element];
-    fn index(&self, at: Range<usize>) -> &[Element] {
-        &self.array[at]
-    }
-}
-
-impl IntoIterator for CollectionVec {
-    type Item = Element;
-    type IntoIter = std::vec::IntoIter<Self::Item>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.array.into_iter()
-    }
 }

@@ -191,7 +191,7 @@ input[type=text]{
   transition: background-color .25s, scale .25s
 }
 
- .deactivated-dot {
+ .dot.hidden {
   margin:auto;
   height: 15px;
   width: 15px;

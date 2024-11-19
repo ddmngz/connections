@@ -31,7 +31,6 @@ pub fn start_state() -> GameState {
     GameState::default()
 }
 
-#[wasm_bindgen]
 impl GameState {
     pub fn puzzle_code(&self) -> String {
         self.board.encode()
@@ -48,12 +47,8 @@ impl GameState {
         Self::new(puzzle)
     }
 
-    pub fn select(&mut self, card_id: usize) -> Result<usize, usize> {
-        if self.board.select(card_id).is_err() {
-            Err(0)
-        } else {
-            Ok(self.board.selection.len())
-        }
+    pub fn select(&mut self, card_id: usize) -> Result<usize, SelectionFailiure> {
+        self.board.select(card_id)
     }
 
     fn record_mistake(&mut self) {
@@ -165,12 +160,11 @@ impl GameState {
 }
 
 impl GameState {
-    /*
     pub const fn const_empty() -> GameState {
         let puzzle = ConnectionPuzzle::empty();
-        GameState::new(puzzle)
+        //GameState::new(puzzle)
+        todo!();
     }
-    */
 
     pub fn empty() -> GameState {
         let puzzle = ConnectionPuzzle::empty();

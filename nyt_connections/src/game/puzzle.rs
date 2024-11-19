@@ -116,10 +116,10 @@ impl std::ops::Index<usize> for ConnectionSet {
     }
 }
 
-impl std::ops::Index<PuzzleIndex> for ConnectionPuzzle {
+impl std::ops::Index<PuzzleRef> for ConnectionPuzzle {
     type Output = str;
 
-    fn index(&self, index: PuzzleIndex) -> &str {
+    fn index(&self, index: PuzzleRef) -> &str {
         let set = self.by_color(index.color());
         index.word(set)
     }
@@ -185,16 +185,9 @@ impl ConnectionPuzzle {
         postcard::from_bytes(&postcard_bytes[..]).map_err(|_| TranscodingError::Postcard)
     }
 
-    pub fn all_keys(&self) -> [PuzzleKey; 16] {
-        array::from_fn(|index| self.nth(index))
-    }
-
-    fn nth(&self, index: usize) -> PuzzleKey {
-        assert!(index < 16);
-        let color = Color::from_int((index / 4) as u8);
-        //console::log_1(&format!("index {}", index).into());
-        //console::log_1(&format!("mod 4:{}", index % 4).into());
-        PuzzleKey::new(color, index % 4)
+    pub fn theme(&self, reference: PuzzleRef) -> &str {
+        let set = self.by_color(reference.color());
+        &set[reference.word_index]
     }
 
     pub fn by_color(&self, color: Color) -> &ConnectionSet {
@@ -232,19 +225,17 @@ pub enum TranscodingError {
     Postcard,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Yokeable)]
-pub struct PuzzleRef<'a> {
-    index: PuzzleIndex,
-    set: &'a ConnectionSet,
-}
-
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
-pub struct PuzzleIndex {
+pub struct PuzzleRef {
     color: Color,
     word_index: usize,
 }
 
-impl PuzzleIndex {
+impl PuzzleRef {
+    const fn new(color: Color, word_index: usize) -> Self {
+        Self { color, word_index }
+    }
+
     pub const fn color(&self) -> Color {
         self.color
     }
@@ -252,9 +243,29 @@ impl PuzzleIndex {
     pub fn word<'a>(&self, set: &'a ConnectionSet) -> &'a str {
         set.words[self.word_index].as_ref()
     }
-}
 
-impl PuzzleRef<'_> {}
+    pub const fn new_set() -> [Self; 16] {
+        use Color::*;
+        [
+            Self::new(Yellow, 0),
+            Self::new(Yellow, 1),
+            Self::new(Yellow, 2),
+            Self::new(Yellow, 3),
+            Self::new(Blue, 0),
+            Self::new(Blue, 1),
+            Self::new(Blue, 2),
+            Self::new(Blue, 3),
+            Self::new(Green, 0),
+            Self::new(Green, 1),
+            Self::new(Green, 2),
+            Self::new(Green, 3),
+            Self::new(Purple, 0),
+            Self::new(Purple, 1),
+            Self::new(Purple, 2),
+            Self::new(Purple, 3),
+        ]
+    }
+}
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct PuzzleKey {

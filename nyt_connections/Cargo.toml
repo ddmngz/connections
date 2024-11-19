@@ -17,7 +17,8 @@ base64 = "0.22.1"
 flate2 = "1.0.34"
 wasm-bindgen-futures = "0.4.45"
 thiserror = "2.0.3"
-yoke = {version = "0.7.4", features= ["derive"]}
+strum = {version = "0.26.3", features = ["derive"]}
+js-sys = "0.3.72"
 [dependencies.web-sys]
 version = "0.3"
-features = ['HtmlDivElement', 'Document', 'Element', 'Window', 'console', 'HtmlCollection', 'CssStyleDeclaration', 'Text', 'DomTokenList', 'EventTarget', 'HtmlInputElement', 'Url', 'Clipboard', 'Navigator', 'HtmlAnchorElement', 'HtmlDialogElement', 'UrlSearchParams']
+features = ['HtmlDivElement', 'Document', 'Element', 'Window', 'console', 'HtmlCollection', 'CssStyleDeclaration', 'Text', 'DomTokenList', 'EventTarget', 'HtmlInputElement', 'Url', 'Clipboard', 'Navigator', 'HtmlAnchorElement', 'HtmlDialogElement', 'UrlSearchParams', 'Location']

@@ -1,5 +1,5 @@
 use super::color::Color;
-use super::puzzle::PuzzleIndex;
+use super::puzzle::PuzzleRef;
 use super::ConnectionPuzzle;
 use rand::prelude::SliceRandom;
 use std::mem::MaybeUninit;
@@ -12,7 +12,7 @@ pub struct Board {
     pub selection: Selection,
     matched_cards: MatchedCards,
     puzzle: ConnectionPuzzle,
-    order: [PuzzleIndex; 16],
+    order: [PuzzleRef; 16],
 }
 
 impl Board {
@@ -26,34 +26,19 @@ impl Board {
         }
     }
     pub fn reset(&mut self) {
-        /*
         self.selection.clear();
         self.matched_cards.clear();
         self.shuffle();
-        */
     }
-    pub fn select(&mut self, index: usize) -> Result<Card, ()> {
-        /*    pub fn select(&mut self, index: usize) -> Result<SelectState, ()> {
-            let key = self.get_key(index);
-            // if it's selected already, get rid of it
-            if self.selection.contains(&key) {
-                self.selection.remove(&key);
-                Ok(SelectState::Normal)
-            }
-            // ugly elif, if it's not matched then it's normal, in which case it should be inserted if
-            // and only if the selection hashset isn't full
-            else if !self.matched_cards.contains(&key.color) {
-                if self.selection.len() == 4 {
-                    Err(())
-                } else {
-                    self.selection.insert(key);
-                    Ok(SelectState::Selected)
-                }
-            } else {
-                Err(())
-            }
-        }*/
-        todo!()
+
+    pub fn select(&mut self, index: usize) -> Result<usize, SelectionFailiure> {
+        let reference = self.order[index];
+        if self.matched_cards.contains(reference.color()) {
+            CardState::Matched
+        } else {
+            self.selection.toggle(reference)?.into()
+        };
+        Ok(self.selection.len())
     }
 
     pub fn deselect_all(&mut self) {
@@ -69,85 +54,66 @@ impl Board {
     }
 
     pub fn test_selection(&mut self) -> Result<Color, SelectionFailiure> {
-        // DIFFERENCE FROM BEFORE: Now if there's a match we should add it to our list
-        /*
-             *    pub fn test_selection(&self) -> Result<Color, SelectionFailiure> {
-            if self.selection.len() != 4 {
-                return Err(SelectionFailiure::NotEnough);
-            }
-            let color: Color = self.selection.iter().next().unwrap().color;
-            let matches = self.selection.iter().filter(|x| x.color == color).count();
-            if matches == 4 {
-                Ok(color)
-            } else if matches == 3 {
-                Err(SelectionFailiure::OneAway)
-            } else {
-                Err(SelectionFailiure::Mismatch)
-            }
+        if self.selection.len() != 4 {
+            return Err(SelectionFailiure::NotEnough);
         }
-             */
-        todo!()
-    }
+        let color = self.selection[0].color();
 
-    fn check(&self, index: usize) -> CardState {
-        /*
-        pub fn check_selection(&mut self) -> Result<Color, SelectionFailiure> {
-            match self.test_selection() {
-                Ok(color) => {
-                    self.move_matched();
-                    self.matched_cards.insert(color);
-                    console::log_1(&format!("length: {}", self.matched_cards.len()).into());
-                    self.selection.clear();
-                    Ok(color)
-                }
-                e => e,
+        let matches = self.selection.iter().filter(|x| x.color() == color).count();
+        match matches {
+            4 => {
+                self.move_matched();
+                self.matched_cards.mark_match(color);
+                self.selection.clear();
+                Ok(color)
             }
+            3 => Err(SelectionFailiure::OneAway),
+            _ => Err(SelectionFailiure::Mismatch),
         }
-            */
-        todo!()
     }
 
     fn move_matched(&mut self) {
-        /*
-        //start..end.iter();
-        let mut top_of_board = self.matched_cards.len() * 4;
-        console::log_1(&format!("moving selection into index {top_of_board}").into());
-        for key in &self.selection {
-            let index = self.order.iter().position(|x| x == key).unwrap();
+        let mut top_of_board = self.matched_cards.num_matched() * 4;
+        for reference in self.selection.iter() {
+            let index = self.order.iter().position(|&x| x == reference).unwrap();
             self.order.swap(top_of_board, index);
             top_of_board += 1;
         }
-        console::log_1(&"move matched done".into());
-        */
     }
 
     pub fn shuffle(&mut self) {
-        /*
-         * let starting_point = self.matched_cards.len() * 4;
-         * let mut rng = rand::thread_rng();
-         * self.order[starting_point..].shuffle(&mut rng);
-         */
+        let starting_point = self.matched_cards.num_matched() * 4;
+        let mut rng = rand::thread_rng();
+        self.order[starting_point..].shuffle(&mut rng);
+    }
+
+    pub const fn new_unordered(puzzle: ConnectionPuzzle) -> Self {
+        let selection = Selection::new();
+        let matched_cards = MatchedCards::new();
+        let order = PuzzleRef::new_set();
+        Self {
+            puzzle,
+            selection,
+            matched_cards,
+            order,
+        }
     }
 
     pub fn new(puzzle: ConnectionPuzzle) -> Self {
-        todo!()
-        /*
-         *  let selection = HashSet::new();
-         *  let matched_cards = HashSet::new();
-         *  let mut rng = rand::thread_rng();
-         *  let mut order = puzzle.all_keys();
-         *  order.shuffle(&mut rng);
-         *  Self {
-         *      puzzle,
-         *      selection,
-         *      matched_cards,
-         *      order,
-         *  }
-         *
-         */
+        let selection = Selection::new();
+        let matched_cards = MatchedCards::default();
+        let mut rng = rand::thread_rng();
+        let mut order = PuzzleRef::new_set();
+        order.shuffle(&mut rng);
+        Self {
+            puzzle,
+            selection,
+            matched_cards,
+            order,
+        }
     }
 
-    fn card_state(&self, card: PuzzleIndex) -> CardState {
+    fn card_state(&self, card: PuzzleRef) -> CardState {
         if self.matched_cards.contains(card.color()) {
             CardState::Matched
         } else if self.selection.contains(card) {
@@ -157,11 +123,11 @@ impl Board {
         }
     }
 
-    fn card_theme(&self, card: PuzzleIndex) -> &str {
+    fn card_theme(&self, card: PuzzleRef) -> &str {
         self.puzzle.by_color(card.color()).theme()
     }
 
-    fn card_word(&self, card: PuzzleIndex) -> &str {
+    fn card_word(&self, card: PuzzleRef) -> &str {
         &self.puzzle[card]
     }
 
@@ -176,6 +142,15 @@ pub enum CardState {
     Selected,
     Normal,
     Matched,
+}
+
+impl From<SelectState> for CardState {
+    fn from(select: SelectState) -> Self {
+        match select {
+            SelectState::Normal => Self::Normal,
+            SelectState::Selected => Self::Selected,
+        }
+    }
 }
 
 pub struct Card<'a> {
@@ -218,7 +193,7 @@ pub enum SelectionFailiure {
     OneAway,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 struct MatchedCards {
     yellow: bool,
     blue: bool,
@@ -227,33 +202,128 @@ struct MatchedCards {
 }
 
 impl MatchedCards {
+    fn num_matched(&self) -> usize {
+        let mut num = 0;
+        if self.yellow {
+            num += 1
+        };
+        if self.blue {
+            num += 1
+        };
+        if self.purple {
+            num += 1
+        };
+        if self.green {
+            num += 1
+        };
+        num
+    }
+
     fn contains(&self, color: Color) -> bool {
+        *self.by_color(color)
+    }
+
+    fn clear(&mut self) {
+        self.yellow = false;
+        self.blue = false;
+        self.purple = false;
+        self.green = false;
+    }
+
+    fn mark_match(&mut self, color: Color) {
+        *self.by_color_mut(color) = true;
+    }
+
+    fn by_color(&self, color: Color) -> &bool {
         match color {
-            Color::Yellow => self.yellow,
-            Color::Blue => self.blue,
-            Color::Purple => self.purple,
-            Color::Green => self.green,
+            Color::Yellow => &self.yellow,
+            Color::Blue => &self.blue,
+            Color::Purple => &self.purple,
+            Color::Green => &self.green,
+        }
+    }
+
+    fn by_color_mut(&mut self, color: Color) -> &mut bool {
+        match color {
+            Color::Yellow => &mut self.yellow,
+            Color::Blue => &mut self.blue,
+            Color::Purple => &mut self.purple,
+            Color::Green => &mut self.green,
+        }
+    }
+
+    const fn new() -> Self {
+        Self {
+            yellow: false,
+            blue: false,
+            purple: false,
+            green: false,
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct Selection {
-    selection: [MaybeUninit<PuzzleIndex>; 4],
+    selection: [MaybeUninit<PuzzleRef>; 4],
     len: SelectionSize,
 }
 
 impl Selection {
-    fn push(&mut self, card: PuzzleIndex) -> Option<usize> {
+    const fn new() -> Self {
+        let selection = [MaybeUninit::uninit(); 4];
+        let len = SelectionSize::Empty;
+        Self { selection, len }
+    }
+
+    fn toggle(&mut self, card: PuzzleRef) -> Result<SelectState, SelectionFailiure> {
+        let index = self.iter().position(|selected_card| selected_card == card);
+        match index {
+            Some(index) => {
+                console::log_1(&"found, removing".into());
+                self.remove(index);
+                Ok(SelectState::Normal)
+            }
+            None => match self.push(card) {
+                Some(_) => {
+                    console::log_1(&"not found, adding".into());
+                    Ok(SelectState::Selected)
+                }
+                None => {
+                    console::log_1(&"Selection Full".into());
+                    Err(SelectionFailiure::NotEnough)
+                }
+            },
+        }
+    }
+
+    fn remove(&mut self, index: usize) {
+        let end_index = self.len() - 1;
+        self.selection.swap(index, end_index);
+        console::log_1(&format!("before remove len is {}", self.len()).into());
+        self.len = match self.len {
+            SelectionSize::Empty => unreachable!(),
+            SelectionSize::One => SelectionSize::Empty,
+            SelectionSize::Two => SelectionSize::One,
+            SelectionSize::Three => SelectionSize::Two,
+            SelectionSize::Four => SelectionSize::Three,
+        };
+        console::log_1(&format!("after remove len is {}", self.len()).into());
+    }
+
+    fn push(&mut self, card: PuzzleRef) -> Option<usize> {
+        if self.len() == 4 {
+            return None;
+        }
+
+        self.selection[self.len()].write(card);
         match self.len {
             SelectionSize::Empty => self.len = SelectionSize::One,
             SelectionSize::One => self.len = SelectionSize::Two,
             SelectionSize::Two => self.len = SelectionSize::Three,
             SelectionSize::Three => self.len = SelectionSize::Four,
-            SelectionSize::Four => return None,
+            SelectionSize::Four => panic!("pushed too many to selection len"),
         };
-        self.selection[self.len as usize].write(card);
-        Some(self.len as usize)
+        Some(self.len())
     }
 
     fn clear(&mut self) {
@@ -264,7 +334,7 @@ impl Selection {
         self.len as usize
     }
 
-    pub fn contains(&self, target_card: PuzzleIndex) -> bool {
+    pub fn contains(&self, target_card: PuzzleRef) -> bool {
         for card in self.iter() {
             if card == target_card {
                 return true;
@@ -273,7 +343,7 @@ impl Selection {
         false
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = PuzzleIndex> + use<'_> {
+    pub fn iter(&self) -> impl Iterator<Item = PuzzleRef> + use<'_> {
         let slice = &self.selection[0..self.len()];
         let iter = slice.iter().map(|index| unsafe { index.assume_init() });
         iter
@@ -293,7 +363,7 @@ impl PartialEq for Selection {
 }
 
 impl Index<usize> for Selection {
-    type Output = PuzzleIndex;
+    type Output = PuzzleRef;
 
     fn index(&self, index: usize) -> &Self::Output {
         assert!(index < (self.len as usize));
