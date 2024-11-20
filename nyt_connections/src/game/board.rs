@@ -46,7 +46,16 @@ impl Board {
     }
 
     pub const fn empty() -> Self {
-        todo!();
+        let puzzle = ConnectionPuzzle::empty();
+        let selection = Selection::new();
+        let matched_cards = MatchedCards::new();
+        let order = PuzzleRef::new_set();
+        Self {
+            puzzle,
+            selection,
+            matched_cards,
+            order,
+        }
     }
 
     pub fn encode(&self) -> String {
@@ -85,18 +94,6 @@ impl Board {
         let starting_point = self.matched_cards.num_matched() * 4;
         let mut rng = rand::thread_rng();
         self.order[starting_point..].shuffle(&mut rng);
-    }
-
-    pub const fn new_unordered(puzzle: ConnectionPuzzle) -> Self {
-        let selection = Selection::new();
-        let matched_cards = MatchedCards::new();
-        let order = PuzzleRef::new_set();
-        Self {
-            puzzle,
-            selection,
-            matched_cards,
-            order,
-        }
     }
 
     pub fn new(puzzle: ConnectionPuzzle) -> Self {

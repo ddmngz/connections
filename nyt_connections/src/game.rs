@@ -9,13 +9,10 @@ use board::SelectionFailiure;
 use color::Color;
 pub use puzzle::ConnectionPuzzle;
 pub use puzzle::ConnectionSet;
-use puzzle::PuzzleKey;
 use puzzle::TranscodingError;
-use std::collections::HashSet;
 use wasm_bindgen::prelude::*;
 #[allow(unused_imports)]
 use web_sys::console;
-use web_sys::HtmlDivElement;
 
 #[wasm_bindgen]
 #[derive(Debug)]
@@ -83,7 +80,7 @@ impl GameState {
                 if almost_won {
                     Ok(Won)
                 } else {
-                    Ok(Matched)
+                    Ok(Matched(color))
                 }
             }
             Err(SelectionFailiure::Mismatch) => {
@@ -123,6 +120,10 @@ impl GameState {
         */
     }
 
+    pub fn get(&self, index: usize) -> Card {
+        self.board.get(index)
+    }
+
     /*
     pub fn get_selection_indices(&self) -> Box<[u32]> {
         //let card_index = card_id - (self.board.matched_cards.len() * 4);
@@ -160,15 +161,15 @@ impl GameState {
 }
 
 impl GameState {
-    pub const fn const_empty() -> GameState {
-        let puzzle = ConnectionPuzzle::empty();
-        //GameState::new(puzzle)
-        todo!();
-    }
+    pub const fn empty() -> GameState {
+        let board = Board::empty();
 
-    pub fn empty() -> GameState {
-        let puzzle = ConnectionPuzzle::empty();
-        GameState::new(puzzle)
+        Self {
+            board,
+            mistakes: 0,
+            successes: 0,
+            prev_attempts: Vec::new(),
+        }
     }
 
     pub fn new(puzzle: ConnectionPuzzle) -> Self {
@@ -188,11 +189,10 @@ impl GameState {
     }
 }
 
-#[wasm_bindgen]
 #[repr(u8)]
 pub enum SelectionSuccess {
     Won,
-    Matched,
+    Matched(Color),
 }
 
 #[wasm_bindgen]

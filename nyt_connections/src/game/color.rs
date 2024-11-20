@@ -1,12 +1,3 @@
-#[derive(Debug)]
-pub struct Yellow {}
-#[derive(Debug)]
-pub struct Blue {}
-#[derive(Debug)]
-pub struct Purple {}
-#[derive(Debug)]
-pub struct Green {}
-
 #[repr(u8)]
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum Color {
@@ -53,33 +44,5 @@ impl Color {
             3 => Color::Green,
             _ => unreachable!(),
         }
-    }
-}
-
-pub trait AsColor {
-    fn color() -> Color;
-}
-
-impl AsColor for Yellow {
-    fn color() -> Color {
-        Color::Yellow
-    }
-}
-
-impl AsColor for Blue {
-    fn color() -> Color {
-        Color::Blue
-    }
-}
-
-impl AsColor for Purple {
-    fn color() -> Color {
-        Color::Purple
-    }
-}
-
-impl AsColor for Green {
-    fn color() -> Color {
-        Color::Green
     }
 }

@@ -1,12 +1,6 @@
 use crate::wasm_bindgen;
 
-use super::color::AsColor;
-use super::color::Blue;
 use super::color::Color;
-use super::color::Green;
-use super::color::Purple;
-use super::color::Yellow;
-use super::Board;
 use base64::{engine::general_purpose::URL_SAFE, Engine as _};
 use flate2::write::GzDecoder;
 use flate2::write::GzEncoder;
@@ -14,7 +8,6 @@ use flate2::Compression;
 use serde::{Deserialize, Serialize};
 use std::array;
 use std::io::Write;
-use std::marker::PhantomData;
 use std::ops::Deref;
 use thiserror::Error;
 

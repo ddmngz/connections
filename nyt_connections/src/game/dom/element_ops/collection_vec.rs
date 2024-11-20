@@ -35,14 +35,6 @@ impl<T: JsCast> CollectionVec<T> {
         }
         Self { array }
     }
-
-    pub fn last(&self) -> Option<&T> {
-        self.array.last()
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
-        self.array.iter()
-    }
 }
 
 impl<T: JsCast> Index<usize> for CollectionVec<T> {

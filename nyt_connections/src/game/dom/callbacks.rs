@@ -1,87 +1,63 @@
-use crate::dom::button::ButtonId;
-use wasm_bindgen::closure::Closure;
-use wasm_bindgen::JsCast;
-use web_sys::js_sys::Function;
-use web_sys::{
-    console, Clipboard, Document, DomTokenList, Element, HtmlCollection, HtmlDialogElement,
-    HtmlDivElement, HtmlElement, Url, UrlSearchParams, Window,
-};
-
-pub fn card_callback(document: &Document, index: usize, card: HtmlDivElement) -> Function {
-    /*
-    button: &HtmlElement,
-    already_guessed: &HtmlDialogElement,
-    one_away: &HtmlDialogElement,
-    won_text: &DomTokenList,
-    lost_text: &DomTokenList,
-    end_screen: &HtmlDialogElement,
-    selection: &HtmlCollection,
-    */
-
-    // get card env
-    // get create closure
-    todo!()
-}
-
-pub fn button_callback(id: &ButtonId) -> Function {
-    // basic button env
-    // get create closure
-    todo!();
-}
-
-fn to_function(closure: impl FnMut() + 'static) -> Function {
-    let closure = Closure::new(closure);
-    closure.into_js_value().into()
-}
-
 use crate::dom::element_ops::collection_vec::CollectionVec;
 use crate::game::GameFailiure;
 use crate::game::SelectionSuccess;
-use wasm_bindgen_futures::JsFuture;
+use wasm_bindgen::closure::Closure;
+use wasm_bindgen::JsValue;
+use web_sys::js_sys::Function;
+use web_sys::{Document, DomTokenList, HtmlDialogElement, HtmlDivElement, Window};
 
+#[allow(unused_imports)]
+use web_sys::console;
+
+use super::button::Button;
+use super::cards::Card;
+use super::cards::Cards;
+use super::cards::Selection;
+use super::misc_objects::dots::Dots;
+use super::misc_objects::end_screen::EndScreen;
+use super::misc_objects::end_screen::EndState;
+use super::misc_objects::Clipboard;
+use super::misc_objects::Url;
 use crate::dom::GAME_STATE;
-/*
-pub enum ButtonId {
-    #[strum(serialize = "shuffle")]
-    Shuffle,
-    #[strum(serialize = "submit")]
-    Submit,
-    #[strum(serialize = "deselect")]
-    DeselectAll,
-    #[strum(serialize = "again")]
-    TryAgain,
-    #[strum(serialize = "share")]
-    Share,
-    #[strum(serialize = "back")]
-    Back,
-    #[strum(serialize = "edit-me")]
-    EditMe,
-    #[strum(serialize = "see-board")]
-    SeeBoard,
-}
-*/
 
-fn submit(
-    button: &HtmlElement,
-    already_guessed: &HtmlDialogElement,
-    one_away: &HtmlDialogElement,
-    won_text: &DomTokenList,
-    lost_text: &DomTokenList,
-    end_screen: &HtmlDialogElement,
-    selection: &HtmlCollection,
+use super::misc_objects::pop_up::PopUp;
+use crate::dom::console_log;
+
+pub fn new_puzzle(window: &Window, url: &mut Url) {
+    let mut url = url.parent();
+    url.remove_puzzle();
+    url.remove_game();
+    window.location().assign(&url.to_string()).unwrap();
+}
+
+pub fn to_function(closure: impl Fn() + 'static) -> Function {
+    let closure: Closure<dyn Fn()> = Closure::new(closure);
+    closure.into_js_value().into()
+}
+
+pub fn to_function_mut(closure: impl FnMut() + 'static) -> Function {
+    let closure: Closure<dyn FnMut()> = Closure::new(closure);
+    closure.into_js_value().into()
+}
+
+pub fn submit(
+    submit_button: &Button,
+    already_guessed: &PopUp,
+    one_away: &PopUp,
+    end_screen: &EndScreen,
+    selection: &Selection,
 ) {
-    button.class_list().add_1("hidden").unwrap();
-    let selection = CollectionVec::<HtmlDivElement>::new(&selection);
-    jump_selection(&selection);
+    submit_button.disable();
+    selection.jump();
     match GAME_STATE.write().unwrap().check_selection() {
-        Ok(SelectionSuccess::Won) => done(won_text, end_screen),
+        Ok(SelectionSuccess::Won) => end_screen.show_relaxed(EndState::Win),
         Ok(_) => (),
-        Err(GameFailiure::Mismatch | GameFailiure::NotEnough) => shake_selection(selection),
-        Err(GameFailiure::OneAway) => animate_modal(one_away),
-        Err(GameFailiure::Lost) => done(lost_text, end_screen),
-        Err(GameFailiure::AlreadyTried) => animate_modal(already_guessed),
+        Err(GameFailiure::Mismatch | GameFailiure::NotEnough) => selection.shake(),
+        Err(GameFailiure::OneAway) => one_away.pop_up(),
+        Err(GameFailiure::Lost) => end_screen.show_relaxed(EndState::Lost),
+        Err(GameFailiure::AlreadyTried) => already_guessed.pop_up(),
     };
-    button.class_list().remove_1("hidden").unwrap();
+    submit_button.enable();
 }
 
 async fn jump_selection(selection: &CollectionVec<HtmlDivElement>) {
@@ -126,86 +102,61 @@ fn done(end_text: &DomTokenList, end_screen: &HtmlDialogElement) {
     */
 }
 
-fn shuffle() {}
-
-fn see_board() {}
-
-fn deselect() {
-    GAME_STATE.write().unwrap().clear_selection();
+pub fn shuffle(cards: &Cards) {
+    let mut game_state = GAME_STATE.write().unwrap();
+    game_state.shuffle();
+    cards.rerender_on_shuffle(&game_state);
 }
 
-fn try_again(
-    document: &Document,
-    submit_class: DomTokenList,
-    deselect_class: DomTokenList,
-    end_screen: HtmlDialogElement,
-) {
-    GAME_STATE.write().unwrap().start_over();
-    //setup_cards(document, submit_class, deselect_class);
+pub fn see_board(end_screen: &EndScreen, shuffle: &Button, deselect: &Button, submit: &Button) {
+    shuffle.disable();
+    deselect.disable();
+    submit.disable();
     end_screen.close();
 }
 
-async fn share(url: Url, clipboard: Clipboard, copied: HtmlDialogElement) {
-    let code = GAME_STATE.read().unwrap().puzzle_code();
-    url.search_params().set("game", &code);
-
-    let future = JsFuture::from(clipboard.write_text(&url.href()));
-    future.await.unwrap();
-    animate_modal(&copied);
+pub fn deselect(selection: &mut Selection, button: &Button) {
+    GAME_STATE.write().unwrap().clear_selection();
+    selection.clear();
+    button.disable();
 }
 
-fn edit_me(cur_location: &str, window: Window) {
-    let code = GAME_STATE.read().unwrap().puzzle_code();
-    let url = Url::new_with_base("..", cur_location).unwrap();
-    let params = url.search_params();
-    params.delete("game");
-    params.set("puzzle", &code);
-    window.location().assign(&url.href()).unwrap();
+pub fn try_again(
+    cards: &mut Cards,
+    end_screen: &EndScreen,
+    dots: &mut Dots,
+    submit: &Button,
+    deselect: &Button,
+) {
+    GAME_STATE.write().unwrap().start_over();
+    cards.reset();
+    dots.reset();
+    submit.disable();
+    deselect.disable();
+    end_screen.close();
 }
 
-enum PopUp {
+pub fn share(url: &mut Url, clipboard: &Clipboard, copied: PopUp) {
+    let code = GAME_STATE.read().unwrap().puzzle_code();
+    url.set_game(&code);
+    let new_url = url.to_string();
+    let future = clipboard.copy_raw(&new_url);
+    let next = move |_: JsValue| copied.pop_up();
+    let closure = Closure::<dyn FnMut(JsValue)>::new(next);
+    future.then(&closure);
+}
+
+pub fn edit_me(window: &Window, cur_url: &mut Url) {
+    let code = GAME_STATE.read().unwrap().puzzle_code();
+    let mut url = cur_url.parent();
+    url.remove_game();
+    url.set_puzzle(&code);
+    window.location().assign(&url.to_string()).unwrap();
+}
+
+enum ErrorPopUp {
     InvalidCode,
     Dom,
     Decoding,
     Other,
-}
-
-fn get_code() -> Result<String, ()> {
-    let window = web_sys::window().ok_or(())?;
-    let document = window.document().ok_or(())?;
-    let url = document.url().or(Err(()))?;
-    let params = Url::new(&url).or(Err(()))?.search_params();
-    params.get("game").ok_or(())
-}
-
-fn card_click(
-    card_class: &DomTokenList,
-    dom_index: &usize,
-    deselect_class: &DomTokenList,
-    submit_class: &DomTokenList,
-) {
-    let Ok(selection_len) = GAME_STATE.write().unwrap().select(*dom_index) else {
-        return;
-    };
-    match selection_len {
-        0 => {
-            deselect_class.add_1("hidden").unwrap();
-            submit_class.add_1("hidden").unwrap();
-        }
-        1 => {
-            deselect_class.remove_1("hidden").unwrap();
-        }
-        2 => (),
-        3 => {
-            submit_class.add_1("hidden").unwrap();
-        }
-        4 => {
-            submit_class.remove_1("hidden").unwrap();
-        }
-        other => {
-            console::log_1(&format!("{}", other).into());
-            unreachable!()
-        }
-    };
-    card_class.toggle("selected").unwrap();
 }

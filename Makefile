@@ -1,15 +1,13 @@
-all: setup 
+all: debug 
 
-setup: build
+debug:
+	wasm-pack build ./nyt_connections --debug --target=web --out-dir="../site/pkg"
+release:
+	wasm-pack build ./nyt_connections --release --target=web --out-dir="../site/pkg"
 
-build:
-	wasm-pack build ./nyt_connections --target=web --out-dir="../site/pkg"
-
-serve: build
-	./server.py
 
 clean: 
 	rm -r ./site/*
 
-.PHONY: build move serve all setup clean
+.PHONY: all debug release clean 
 

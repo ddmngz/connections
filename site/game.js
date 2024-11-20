@@ -1,4 +1,4 @@
-import init, {GameState, start_state, SelectionSuccess, GameFailiure, TranscodingError, start_game} from './pkg/nyt_connections.js';
+import init from './pkg/nyt_connections.js';
 
 
 
@@ -251,11 +251,12 @@ function entry_point(){
     }
 }
 
+/*
 addEventListener("load", (_) => {
     document.documentElement.removeAttribute("hidden");
 });
+*/
 
 await run();
 //entry_point();
-start_game();
 

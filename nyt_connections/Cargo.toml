@@ -21,4 +21,4 @@ strum = {version = "0.26.3", features = ["derive"]}
 js-sys = "0.3.72"
 [dependencies.web-sys]
 version = "0.3"
-features = ['HtmlDivElement', 'Document', 'Element', 'Window', 'console', 'HtmlCollection', 'CssStyleDeclaration', 'Text', 'DomTokenList', 'EventTarget', 'HtmlInputElement', 'Url', 'Clipboard', 'Navigator', 'HtmlAnchorElement', 'HtmlDialogElement', 'UrlSearchParams', 'Location']
+features = ['HtmlDivElement', 'Document', 'Element', 'Window', 'console', 'HtmlCollection', 'CssStyleDeclaration', 'Text', 'DomTokenList', 'EventTarget', 'HtmlInputElement', 'Url', 'Clipboard', 'Navigator', 'HtmlAnchorElement', 'HtmlDialogElement', 'UrlSearchParams', 'Location', 'HtmlSpanElement']
