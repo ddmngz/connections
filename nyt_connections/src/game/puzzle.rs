@@ -118,10 +118,6 @@ impl std::ops::Index<PuzzleRef> for ConnectionPuzzle {
     }
 }
 
-const fn empty_pair() -> (String, [String; 4]) {
-    (String::new(), [const { String::new() }; 4])
-}
-
 impl ConnectionPuzzle {
     pub const fn empty() -> Self {
         let yellow = YellowSet(ConnectionSet::empty_set());
@@ -264,12 +260,6 @@ impl PuzzleRef {
 pub struct PuzzleKey {
     pub color: Color,
     pub word_index: usize,
-}
-
-impl PuzzleKey {
-    fn new(color: Color, word_index: usize) -> Self {
-        Self { color, word_index }
-    }
 }
 
 impl Default for PuzzleKey {

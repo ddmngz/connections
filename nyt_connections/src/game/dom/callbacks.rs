@@ -1,16 +1,17 @@
-use crate::dom::element_ops::collection_vec::CollectionVec;
 use crate::game::GameFailiure;
 use crate::game::SelectionSuccess;
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsValue;
 use web_sys::js_sys::Function;
-use web_sys::{Document, DomTokenList, HtmlDialogElement, HtmlDivElement, Window};
+use web_sys::Window;
 
 #[allow(unused_imports)]
 use web_sys::console;
 
+#[allow(unused_imports)]
+use crate::dom::console_log;
+
 use super::button::Button;
-use super::cards::Card;
 use super::cards::Cards;
 use super::cards::Selection;
 use super::misc_objects::dots::Dots;
@@ -21,7 +22,6 @@ use super::misc_objects::Url;
 use crate::dom::GAME_STATE;
 
 use super::misc_objects::pop_up::PopUp;
-use crate::dom::console_log;
 
 pub fn new_puzzle(window: &Window, url: &mut Url) {
     let mut url = url.parent();
@@ -30,76 +30,98 @@ pub fn new_puzzle(window: &Window, url: &mut Url) {
     window.location().assign(&url.to_string()).unwrap();
 }
 
-pub fn to_function(closure: impl Fn() + 'static) -> Function {
-    let closure: Closure<dyn Fn()> = Closure::new(closure);
-    closure.into_js_value().into()
-}
-
 pub fn to_function_mut(closure: impl FnMut() + 'static) -> Function {
     let closure: Closure<dyn FnMut()> = Closure::new(closure);
     closure.into_js_value().into()
 }
 
-pub fn submit(
-    submit_button: &Button,
-    already_guessed: &PopUp,
-    one_away: &PopUp,
-    end_screen: &EndScreen,
-    selection: &Selection,
-) {
-    submit_button.disable();
-    selection.jump();
-    match GAME_STATE.write().unwrap().check_selection() {
-        Ok(SelectionSuccess::Won) => end_screen.show_relaxed(EndState::Win),
-        Ok(_) => (),
-        Err(GameFailiure::Mismatch | GameFailiure::NotEnough) => selection.shake(),
-        Err(GameFailiure::OneAway) => one_away.pop_up(),
-        Err(GameFailiure::Lost) => end_screen.show_relaxed(EndState::Lost),
-        Err(GameFailiure::AlreadyTried) => already_guessed.pop_up(),
-    };
-    submit_button.enable();
+#[derive(Clone)]
+pub struct SubmitCallback {
+    submit_button: Button,
+    already_guessed: PopUp,
+    one_away: PopUp,
+    end_screen: EndScreen,
+    selection: Selection,
+    dots: Dots,
+    cards: Cards,
 }
 
-async fn jump_selection(selection: &CollectionVec<HtmlDivElement>) {
-    let animations = [
-        "jump linear .25s",
-        "jump2 linear .25s",
-        "jump3 linear .25s",
-        "jump4 linear .25s",
-    ];
-    for (card, animation) in selection.iter().zip(animations) {
-        card.style().remove_property("animation");
-        card.style().set_property("animation", animation);
+use wasm_bindgen_futures::spawn_local;
+impl SubmitCallback {
+    pub fn boxed_click(mut self: Box<Self>) {
+        spawn_local(async move { self.submit().await })
     }
-}
 
-fn shake_selection(selection: CollectionVec<HtmlDivElement>) {
-    for card in selection {
-        card.style().remove_property("animation");
-        card.style().set_property("animation", "shake linear .25s");
+    pub fn submit_callback(self: Box<Self>) {
+        let mut button_handle = self.submit_button.clone();
+        let function = to_function_mut(move || Self::boxed_click(self.clone()));
+        button_handle.register(function);
     }
-}
 
-fn animate_modal(element: &HtmlDialogElement) {
-    element.style().remove_property("animation");
-    element
-        .style()
-        .set_property("animation", "show_modal 5s ease-in");
-}
-
-fn done(end_text: &DomTokenList, end_screen: &HtmlDialogElement) {
-    end_screen.show_modal();
-    end_text.add_1("enabled");
-
-    /*
-     * might need this
-    function show_end_buttons(){
-        document.getElementById("again").classList.add("enabled");
-        document.getElementById("share").classList.add("enabled");
-        document.getElementById("back").classList.add("enabled");
-        document.getElementById("edit-me").classList.add("enabled");
+    pub fn new(
+        submit_button: Button,
+        already_guessed: PopUp,
+        one_away: PopUp,
+        end_screen: EndScreen,
+        selection: Selection,
+        dots: Dots,
+        cards: Cards,
+    ) -> Self {
+        Self {
+            submit_button,
+            already_guessed,
+            one_away,
+            end_screen,
+            selection,
+            dots,
+            cards,
+        }
     }
-    */
+
+    async fn submit(&mut self) {
+        self.submit_button.disable();
+        self.selection.update_jump_later().await;
+        let res = { GAME_STATE.write().unwrap().check_selection() };
+        match res {
+            Ok(success) => self.handle_success(success).await,
+            Err(e) => self.handle_failiure(e).await,
+        };
+    }
+
+    async fn handle_success(&mut self, success: SelectionSuccess) {
+        let state = GAME_STATE.read().unwrap();
+        match success {
+            SelectionSuccess::Won(color) => {
+                self.selection.clear();
+                self.cards.add_set(color, &state);
+                self.end_screen.show(EndState::Win);
+            }
+            SelectionSuccess::Matched(color) => {
+                self.selection.clear();
+                self.cards.add_set(color, &state);
+            }
+        }
+    }
+
+    async fn handle_failiure(&mut self, failiure: GameFailiure) {
+        match failiure {
+            GameFailiure::Lost => {
+                self.submit_button.enable();
+                self.end_screen.show(EndState::Lost)
+            }
+            e => {
+                self.submit_button.enable();
+                self.dots.hide_one();
+                // remove a dot and animate these
+                match e {
+                    GameFailiure::Mismatch | GameFailiure::NotEnough => self.selection.shake(),
+                    GameFailiure::OneAway => self.one_away.pop_up().await,
+                    GameFailiure::AlreadyTried => self.already_guessed.pop_up().await,
+                    GameFailiure::Lost => unreachable!(),
+                }
+            }
+        }
+    }
 }
 
 pub fn shuffle(cards: &Cards) {
@@ -115,10 +137,11 @@ pub fn see_board(end_screen: &EndScreen, shuffle: &Button, deselect: &Button, su
     end_screen.close();
 }
 
-pub fn deselect(selection: &mut Selection, button: &Button) {
+pub fn deselect(selection: &mut Selection, deselect_button: &Button, submit_button: &Button) {
     GAME_STATE.write().unwrap().clear_selection();
     selection.clear();
-    button.disable();
+    deselect_button.disable();
+    submit_button.disable();
 }
 
 pub fn try_again(
@@ -136,14 +159,43 @@ pub fn try_again(
     end_screen.close();
 }
 
-pub fn share(url: &mut Url, clipboard: &Clipboard, copied: PopUp) {
+pub async fn share(url: &mut Url, clipboard: &Clipboard, copied: PopUp) {
     let code = GAME_STATE.read().unwrap().puzzle_code();
     url.set_game(&code);
     let new_url = url.to_string();
-    let future = clipboard.copy_raw(&new_url);
-    let next = move |_: JsValue| copied.pop_up();
-    let closure = Closure::<dyn FnMut(JsValue)>::new(next);
-    future.then(&closure);
+    clipboard.copy_async(&new_url).await;
+    copied.pop_up().await;
+}
+
+#[derive(Clone)]
+pub struct ShareCallback {
+    url: Url,
+    clipboard: Clipboard,
+    copied: PopUp,
+}
+
+impl ShareCallback {
+    pub fn register(button: &mut Button, url: Url, clipboard: Clipboard, copied: PopUp) {
+        let items = Box::new(Self {
+            url,
+            clipboard,
+            copied,
+        });
+        let function = to_function_mut(move || Self::on_click(items.clone()));
+        button.register(function);
+    }
+
+    fn on_click(mut self: Box<Self>) {
+        spawn_local(async move { self.share().await })
+    }
+
+    async fn share(&mut self) {
+        let code = GAME_STATE.read().unwrap().puzzle_code();
+        self.url.set_game(&code);
+        let new_url = self.url.to_string();
+        self.clipboard.copy_async(&new_url).await;
+        self.copied.pop_up().await;
+    }
 }
 
 pub fn edit_me(window: &Window, cur_url: &mut Url) {
@@ -152,11 +204,4 @@ pub fn edit_me(window: &Window, cur_url: &mut Url) {
     url.remove_game();
     url.set_puzzle(&code);
     window.location().assign(&url.to_string()).unwrap();
-}
-
-enum ErrorPopUp {
-    InvalidCode,
-    Dom,
-    Decoding,
-    Other,
 }

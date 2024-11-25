@@ -3,16 +3,13 @@ pub use element_ops::CollectionVec;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::js_sys::Promise;
 use web_sys::Document;
-use web_sys::HtmlDivElement;
 use web_sys::HtmlSpanElement;
 use web_sys::Window;
-/*
-    let url = Url::new(&document.url().map_err(|_| ())?).map_err(|_| ())?;
-    let clipboard = window.navigator().clipboard();
-*/
 
 #[derive(Clone)]
 pub struct Url(web_sys::Url);
+
+#[derive(Clone)]
 pub struct Clipboard(web_sys::Clipboard);
 
 impl Url {
@@ -37,7 +34,7 @@ impl Url {
     }
 
     pub fn set_game(&mut self, code: &str) {
-        self.0.search_params().set("game", &code);
+        self.0.search_params().set("game", code);
     }
 
     pub fn remove_game(&mut self) {
@@ -45,18 +42,20 @@ impl Url {
     }
 
     pub fn set_puzzle(&mut self, code: &str) {
-        self.0.search_params().set("puzzle", &code);
+        self.0.search_params().set("puzzle", code);
     }
 
     pub fn remove_puzzle(&mut self) {
         self.0.search_params().delete("puzzle");
     }
-
-    pub fn to_string(&self) -> String {
-        self.0.href()
-    }
 }
 
+use std::fmt;
+impl fmt::Display for Url {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write!(f, "{}", self.0.href())
+    }
+}
 impl Clipboard {
     pub fn new(window: &Window) -> Self {
         Self(window.navigator().clipboard())
@@ -78,6 +77,7 @@ impl Clipboard {
 pub mod dots {
     use super::*;
 
+    #[derive(Clone)]
     pub struct Dots {
         dots: [Dot; 4],
         remaining: Option<NumDots>,
@@ -108,7 +108,14 @@ pub mod dots {
             };
             let i = (num_dots as usize) - 1;
             self.dots[i].hide();
+            self.remaining = match num_dots {
+                NumDots::One => None,
+                NumDots::Two => Some(NumDots::One),
+                NumDots::Three => Some(NumDots::Two),
+                NumDots::Four => Some(NumDots::Three),
+            }
         }
+
         pub fn reset(&mut self) {
             self.remaining = Some(NumDots::Four);
             for dot in &self.dots {
@@ -117,6 +124,7 @@ pub mod dots {
         }
     }
 
+    #[derive(Clone)]
     struct Dot(HtmlSpanElement);
     impl Dot {
         fn show(&self) {
@@ -130,8 +138,11 @@ pub mod dots {
 }
 
 pub mod pop_up {
+    use super::element_ops;
+    use super::element_ops::AnimationType;
+    use crate::game::dom::console_log;
+    use element_ops::DomError;
     use strum::AsRefStr;
-    use wasm_bindgen::JsCast;
     use web_sys::Document;
     use web_sys::HtmlDialogElement;
     #[derive(Clone)]
@@ -148,25 +159,26 @@ pub mod pop_up {
     }
 
     impl PopUp {
-        pub fn new(document: &Document, id: PopUpId) -> Self {
-            let popup: HtmlDialogElement = document
-                .get_element_by_id(id.as_ref())
-                .unwrap()
-                .dyn_into()
-                .unwrap();
-            Self(popup)
+        pub fn new(document: &Document, id: PopUpId) -> Result<Self, DomError> {
+            let popup = element_ops::new::<HtmlDialogElement>(document, id.as_ref())?;
+            Ok(Self(popup))
         }
 
-        pub fn pop_up(&self) {
-            let style = self.0.style();
-            style.remove_property("animation");
-            style.set_property("animation", "show_modal 5s ease-in");
+        pub async fn pop_up(&self) {
+            console_log!("opening");
+            self.0.show();
+            console_log!("animating");
+            let _ = element_ops::animate_later(&self.0, AnimationType::PopUp).await;
+            console_log!("done animating");
+            self.0.close();
+            console_log!("closing");
         }
     }
 }
 
 pub mod end_screen {
     use super::element_ops;
+    use element_ops::AnimationType;
     use web_sys::Document;
     use web_sys::DomTokenList;
     use web_sys::HtmlDialogElement;
@@ -177,11 +189,6 @@ pub mod end_screen {
         modal: HtmlDialogElement,
         win_div: DomTokenList,
         lose_div: DomTokenList,
-    }
-
-    pub struct ShownEndScreen {
-        modal: HtmlDialogElement,
-        shown_div: DomTokenList,
     }
 
     #[derive(Copy, Clone)]
@@ -202,45 +209,17 @@ pub mod end_screen {
             })
         }
 
-        pub fn show_relaxed(&self, state: EndState) {
-            self.modal.show_modal();
+        pub fn show(&self, state: EndState) {
+            let _ = self.modal.show_modal();
             let shown_div = match state {
                 EndState::Win => &self.win_div,
                 EndState::Lost => &self.win_div,
             };
-            shown_div.add_1("enabled");
+            let _ = shown_div.add_1("enabled");
         }
 
         pub fn close(&self) {
             self.modal.close();
-        }
-
-        pub fn show(self, state: EndState) -> ShownEndScreen {
-            self.modal.show_modal();
-            let modal = self.modal;
-            let shown_div = match state {
-                EndState::Win => self.win_div,
-                EndState::Lost => self.win_div,
-            };
-            shown_div.add_1("enabled");
-            ShownEndScreen { modal, shown_div }
-        }
-    }
-
-    impl ShownEndScreen {
-        fn hide(&self) {
-            self.modal.close();
-            self.shown_div.remove_1("enabled");
-        }
-
-        fn show(&self) {
-            self.modal.show_modal();
-            self.shown_div.add_1("enabled");
-        }
-
-        fn close(&self) {
-            self.modal.close();
-            self.shown_div.remove_1("enabled");
         }
     }
 }

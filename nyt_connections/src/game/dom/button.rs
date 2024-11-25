@@ -3,11 +3,9 @@ use element_ops::DomError;
 use js_sys::Function;
 use strum::AsRefStr;
 use strum::EnumIter;
-use strum::IntoEnumIterator;
 use strum::VariantArray;
 use thiserror::Error;
-#[allow(unused_imports)]
-use web_sys::console;
+
 use web_sys::{Document, HtmlDivElement, Window};
 
 #[derive(AsRefStr, EnumIter, Clone, Copy, VariantArray)]
@@ -35,10 +33,7 @@ pub fn init_buttons(document: &Document, window: Window) -> Result<[Button; 8], 
 }
 
 #[derive(Clone)]
-pub struct Button {
-    id: ButtonId,
-    button: HtmlDivElement,
-}
+pub struct Button(HtmlDivElement);
 
 #[derive(Debug, Error)]
 pub enum ButtonError {
@@ -49,40 +44,30 @@ pub enum ButtonError {
 }
 
 impl Button {
-    fn all_buttons(document: &Document) -> Result<[Self; 8], ButtonError> {
-        let mut ids = Vec::new();
-        for id in ButtonId::iter() {
-            ids.push(Self::new(document, id)?);
-        }
-        let len = ids.len();
-        ids.try_into().map_err(|_| ButtonError::Miscount(len))
-    }
-
     pub fn disable(&self) {
-        let _ = self.button.class_list().add_1("hidden");
+        let _ = self.0.class_list().add_1("hidden");
     }
 
     pub fn enable(&self) {
-        let _ = self.button.class_list().remove_1("hidden");
+        let _ = self.0.class_list().remove_1("hidden");
     }
 
     pub fn new(document: &Document, id: ButtonId) -> Result<Self, DomError> {
-        let button = element_ops::new(document, &id)?;
-        Ok(Self { button, id })
+        let button = element_ops::new(document, id)?;
+        Ok(Self(button))
     }
 
     pub fn register(&mut self, function: Function) {
-        self.button
-            .add_event_listener_with_callback("click", &function);
+        let _ = self.0.add_event_listener_with_callback("click", &function);
     }
 
     pub fn deregister(&mut self, function: Function) {
-        self.button
-            .add_event_listener_with_callback("click", &function);
+        let _ = self.0.add_event_listener_with_callback("click", &function);
     }
 }
 
 mod button_builder {
+
     use super::super::{
         cards::Cards,
         cards::Selection,
@@ -97,6 +82,7 @@ mod button_builder {
     use super::Document;
     use super::Window;
     use crate::dom::callbacks;
+    use callbacks::ShareCallback;
 
     struct Builder {
         submit: Button,
@@ -135,14 +121,14 @@ mod button_builder {
                 submit: Button::new(document, ButtonId::Submit)?,
                 deselect: Button::new(document, ButtonId::DeselectAll)?,
                 shuffle: Button::new(document, ButtonId::Shuffle)?,
-                already_guessed: PopUp::new(document, PopUpId::AlreadyGuessed),
-                one_away: PopUp::new(document, PopUpId::OneAway),
-                copied: PopUp::new(document, PopUpId::OneAway),
+                already_guessed: PopUp::new(document, PopUpId::AlreadyGuessed)?,
+                one_away: PopUp::new(document, PopUpId::OneAway)?,
+                copied: PopUp::new(document, PopUpId::OneAway)?,
                 end_screen: EndScreen::new(document)?,
                 selection: Selection::new(document),
-                cards: Cards::new(document).unwrap(),
+                cards: Cards::new_handle(document).unwrap(),
                 dots: Dots::new(document),
-                url: Url::new(&document),
+                url: Url::new(document),
                 clipboard: Clipboard::new(&window),
                 window,
                 document: document.clone(),
@@ -290,19 +276,15 @@ mod button_builder {
     }
 
     impl State4 {
-        fn try_again(mut self, vec: &mut Vec<Button>) -> Result<State5, DomError> {
+        fn try_again(self, vec: &mut Vec<Button>) -> Result<State5, DomError> {
             let mut try_again = Button::new(&self.document, ButtonId::TryAgain)?;
             let submit = self.submit.clone();
             let end_screen = self.end_screen.clone();
             let deselect = self.deselect.clone();
+            let mut dots = self.dots.clone();
+            let mut cards = self.cards.clone();
             let callback = callbacks::to_function_mut(move || {
-                callbacks::try_again(
-                    &mut self.cards,
-                    &end_screen,
-                    &mut self.dots,
-                    &submit,
-                    &deselect,
-                );
+                callbacks::try_again(&mut cards, &end_screen, &mut dots, &submit, &deselect);
             });
             try_again.register(callback);
             vec.push(try_again);
@@ -311,9 +293,11 @@ mod button_builder {
                 shuffle: self.shuffle,
                 deselect: self.deselect,
                 end_screen: self.end_screen,
+                cards: self.cards,
                 already_guessed: self.already_guessed,
                 one_away: self.one_away,
                 copied: self.copied,
+                dots: self.dots,
                 selection: self.selection,
                 url: self.url,
                 clipboard: self.clipboard,
@@ -331,6 +315,8 @@ mod button_builder {
         //state 6
         already_guessed: PopUp,
         one_away: PopUp,
+        dots: Dots,
+        cards: Cards,
         //also state 8
         end_screen: EndScreen,
 
@@ -342,18 +328,16 @@ mod button_builder {
     }
 
     impl State5 {
-        fn share(mut self, vec: &mut Vec<Button>) -> Result<State6, DomError> {
+        fn share(self, vec: &mut Vec<Button>) -> Result<State6, DomError> {
             let mut share = Button::new(&self.document, ButtonId::Share)?;
-
-            let callback = callbacks::to_function_mut(move || {
-                callbacks::share(&mut self.url, &self.clipboard, self.copied.clone())
-            });
-            share.register(callback);
+            ShareCallback::register(&mut share, self.url, self.clipboard, self.copied);
             vec.push(share);
             Ok(State6 {
                 already_guessed: self.already_guessed,
                 one_away: self.one_away,
                 end_screen: self.end_screen,
+                dots: self.dots,
+                cards: self.cards,
 
                 selection: self.selection,
                 submit: self.submit,
@@ -369,7 +353,7 @@ mod button_builder {
         one_away: PopUp,
         //also needed by state8
         end_screen: EndScreen,
-
+        cards: Cards,
         //needed by state7
         selection: Selection,
         //neded by state7 and state8
@@ -378,24 +362,26 @@ mod button_builder {
         submit: Button,
         shuffle: Button,
         document: Document,
+        dots: Dots,
     }
 
     impl State6 {
         fn submit(self, vec: &mut Vec<Button>) -> Result<State7, DomError> {
-            let mut submit = Button::new(&self.document, ButtonId::Submit)?;
-            let submit_button = self.submit.clone();
-            let selection = self.selection.clone();
+            let submit = Button::new(&self.document, ButtonId::Submit)?;
             let end_screen = self.end_screen.clone();
-            let callback = callbacks::to_function(move || {
-                callbacks::submit(
-                    &submit_button,
-                    &self.already_guessed,
-                    &self.one_away,
-                    &end_screen,
-                    &selection,
-                )
-            });
-            submit.register(callback);
+            let submit_button = self.submit.clone();
+            let already_guessed = self.already_guessed.clone();
+            let selection = self.selection.clone();
+            let callback_struct = Box::new(callbacks::SubmitCallback::new(
+                submit_button,
+                already_guessed,
+                self.one_away,
+                end_screen,
+                selection,
+                self.dots,
+                self.cards,
+            ));
+            callback_struct.submit_callback();
             vec.push(submit);
             Ok(State7 {
                 // needed by state7
@@ -424,10 +410,11 @@ mod button_builder {
 
     impl State7 {
         fn deselect(mut self, vec: &mut Vec<Button>) -> Result<State8, DomError> {
-            let mut deselect = Button::new(&self.document, ButtonId::SeeBoard)?;
+            let mut deselect = Button::new(&self.document, ButtonId::DeselectAll)?;
             let deselect_button = self.deselect.clone();
+            let submit_button = self.submit.clone();
             let callback = callbacks::to_function_mut(move || {
-                callbacks::deselect(&mut self.selection, &deselect_button)
+                callbacks::deselect(&mut self.selection, &deselect_button, &submit_button)
             });
             deselect.register(callback);
             vec.push(deselect);

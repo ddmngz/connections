@@ -95,6 +95,21 @@ input[type=text]{
     display:inline;
 }
 
+.matched-set.yellow {
+    display:inline-block;
+    background-color: var(--connections-yellow);
+}
+
+.matched-set.green {
+    display:inline-block;
+    background-color: var(--connections-green);
+}
+
+.matched-set.purple {
+    display:inline-block;
+    background-color: var(--connections-maroon);
+}
+
 .matched-set.blue {
     display:inline-block;
     background-color: var(--connections-blue);
@@ -460,13 +475,14 @@ input[type=text]{
   font-size:medium;  
   border-radius: 6px;
   font-weight:600;
-  transition: opacity .25s ease-out;
   }
 
 
+  /*
 dialog[open]{
   animation: fade-in 0.4s ease-out;
 }
+*/
 
 #copied{
     position: fixed;

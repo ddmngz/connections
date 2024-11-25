@@ -21,7 +21,7 @@ async function run() {
 }
 
 
-
+/*
 function main(state){
 
     const initializeCards = (card, card_key) => {
@@ -250,12 +250,10 @@ function entry_point(){
         default_main();
     }
 }
-
-/*
+*/
 addEventListener("load", (_) => {
     document.documentElement.removeAttribute("hidden");
 });
-*/
 
 await run();
 //entry_point();

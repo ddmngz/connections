@@ -1,6 +1,7 @@
 use super::color::Color;
 use super::puzzle::PuzzleRef;
 use super::ConnectionPuzzle;
+use crate::dom::console_log;
 use rand::prelude::SliceRandom;
 use std::mem::MaybeUninit;
 use std::ops::Index;
@@ -82,6 +83,7 @@ impl Board {
     }
 
     fn move_matched(&mut self) {
+        console_log!("move matched");
         let mut top_of_board = self.matched_cards.num_matched() * 4;
         for reference in self.selection.iter() {
             let index = self.order.iter().position(|&x| x == reference).unwrap();
@@ -128,7 +130,7 @@ impl Board {
         &self.puzzle[card]
     }
 
-    pub fn matched_set_strings(&self, color: Color) -> (&str, String) {
+    pub fn matched_set_text(&self, color: Color) -> (&str, String) {
         let set = self.puzzle.by_color(color);
         (set.theme(), set.words())
     }

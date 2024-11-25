@@ -2,6 +2,8 @@ mod board;
 pub mod color;
 pub mod dom;
 mod puzzle;
+#[allow(unused_imports)]
+use crate::dom::console_log;
 use board::Board;
 use board::Card;
 use board::Selection;
@@ -11,8 +13,6 @@ pub use puzzle::ConnectionPuzzle;
 pub use puzzle::ConnectionSet;
 use puzzle::TranscodingError;
 use wasm_bindgen::prelude::*;
-#[allow(unused_imports)]
-use web_sys::console;
 
 #[wasm_bindgen]
 #[derive(Debug)]
@@ -69,16 +69,9 @@ impl GameState {
         match self.board.test_selection() {
             Ok(color) => {
                 self.successes += 1;
-                //self.dom.disable_deselect();
-                /*
-                self.dom
-                    .render_cards(&self.board, (self.board.matched_cards.len() - 1) * 4);
-                let (theme, words) = self.match_set_strings(color);
-                self.dom.render_match(color, theme, &words);
-                //self.dom.render_cards(&self.board);
-                */
+
                 if almost_won {
-                    Ok(Won)
+                    Ok(Won(color))
                 } else {
                     Ok(Matched(color))
                 }
@@ -142,7 +135,7 @@ impl GameState {
     */
 
     pub fn from_code(code: &str) -> Result<Self, TranscodingError> {
-        let puzzle = ConnectionPuzzle::decode(&code)?;
+        let puzzle = ConnectionPuzzle::decode(code)?;
         Ok(Self::new(puzzle))
     }
 
@@ -155,8 +148,12 @@ impl GameState {
         self.render_cards();
     }
 
+    pub fn matched_set_text(&self, color: Color) -> (&str, String) {
+        self.board.matched_set_text(color)
+    }
+
     pub fn clipboard_copied(&self) {
-        console::log_1(&"copied to clipboard!".into());
+        console_log!("copied to clipboard");
     }
 }
 
@@ -182,16 +179,11 @@ impl GameState {
             prev_attempts,
         }
     }
-
-    // string for matched set
-    fn matched_set_strings(&self, color: Color) -> (&str, String) {
-        self.board.matched_set_strings(color)
-    }
 }
 
 #[repr(u8)]
 pub enum SelectionSuccess {
-    Won,
+    Won(Color),
     Matched(Color),
 }
 
