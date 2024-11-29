@@ -9,7 +9,7 @@ use web_sys::Window;
 use web_sys::console;
 
 #[allow(unused_imports)]
-use crate::dom::console_log;
+use crate::console_log;
 
 use super::button::Button;
 use super::cards::Cards;
@@ -32,6 +32,11 @@ pub fn new_puzzle(window: &Window, url: &mut Url) {
 
 pub fn to_function_mut(closure: impl FnMut() + 'static) -> Function {
     let closure: Closure<dyn FnMut()> = Closure::new(closure);
+    closure.into_js_value().into()
+}
+
+pub fn to_function(closure: impl Fn() + 'static) -> Function {
+    let closure: Closure<dyn Fn()> = Closure::new(closure);
     closure.into_js_value().into()
 }
 
@@ -83,41 +88,27 @@ impl SubmitCallback {
         self.selection.update_jump_later().await;
         let res = { GAME_STATE.write().unwrap().check_selection() };
         match res {
-            Ok(success) => self.handle_success(success).await,
-            Err(e) => self.handle_failiure(e).await,
-        };
-    }
-
-    async fn handle_success(&mut self, success: SelectionSuccess) {
-        let state = GAME_STATE.read().unwrap();
-        match success {
-            SelectionSuccess::Won(color) => {
+            Ok(success) => {
                 self.selection.clear();
-                self.cards.add_set(color, &state);
-                self.end_screen.show(EndState::Win);
+                let state = GAME_STATE.read().unwrap();
+                match success {
+                    SelectionSuccess::Won(color) => {
+                        self.cards.add_set(color, &state);
+                        self.end_screen.show(EndState::Win);
+                    }
+                    SelectionSuccess::Matched(color) => {
+                        self.cards.add_set(color, &state);
+                    }
+                };
             }
-            SelectionSuccess::Matched(color) => {
-                self.selection.clear();
-                self.cards.add_set(color, &state);
-            }
-        }
-    }
-
-    async fn handle_failiure(&mut self, failiure: GameFailiure) {
-        match failiure {
-            GameFailiure::Lost => {
-                self.submit_button.enable();
-                self.end_screen.show(EndState::Lost)
-            }
-            e => {
+            Err(failiure) => {
                 self.submit_button.enable();
                 self.dots.hide_one();
-                // remove a dot and animate these
-                match e {
+                match failiure {
                     GameFailiure::Mismatch | GameFailiure::NotEnough => self.selection.shake(),
                     GameFailiure::OneAway => self.one_away.pop_up().await,
                     GameFailiure::AlreadyTried => self.already_guessed.pop_up().await,
-                    GameFailiure::Lost => unreachable!(),
+                    GameFailiure::Lost => self.end_screen.show(EndState::Lost),
                 }
             }
         }
@@ -150,17 +141,11 @@ pub fn try_again(
     dots: &mut Dots,
     submit: &Button,
     deselect: &Button,
-    selection: Selection,
 ) {
     {
         GAME_STATE.write().unwrap().start_over();
     }
-    cards.reset(
-        deselect.clone(),
-        submit.clone(),
-        selection,
-        &GAME_STATE.read().unwrap(),
-    );
+    cards.reset(&GAME_STATE.read().unwrap());
     dots.reset();
     submit.disable();
     deselect.disable();
