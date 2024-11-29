@@ -33,10 +33,10 @@ pub fn init_buttons(document: &Document, window: Window) -> Result<[Button; 8], 
 }
 
 #[derive(Clone)]
-pub struct Button{
-    inner:HtmlDivElement,
-    callback:Option<Function>,
-};
+pub struct Button {
+    inner: HtmlDivElement,
+    callback: Option<Function>,
+}
 
 #[derive(Debug, Error)]
 pub enum ButtonError {
@@ -57,26 +57,34 @@ impl Button {
 
     pub fn new(document: &Document, id: ButtonId) -> Result<Self, DomError> {
         let button = element_ops::new(document, id)?;
-        Ok(Self{inner:button, callback:None})
+        Ok(Self {
+            inner: button,
+            callback: None,
+        })
     }
 
     pub fn register(&mut self, function: Function) {
-        let _ = self.inner.add_event_listener_with_callback("click", &function);
+        let _ = self
+            .inner
+            .add_event_listener_with_callback("click", &function);
         self.callback = Some(function);
     }
 
-    pub fn reregister(&mut self) -> bool{
-        if let Some(function) = &self.callback{
-            let _ = self.inner.add_event_listener_with_callback("click", function);
+    pub fn reregister(&mut self) -> bool {
+        if let Some(function) = &self.callback {
+            let _ = self
+                .inner
+                .add_event_listener_with_callback("click", function);
             true
-        }else{
+        } else {
             false
         }
     }
 
     pub fn deregister(&mut self) {
-        if let Some(function) = &self.callback{
-            self.inner.remove_event_listener_with_callback("click", function);
+        if let Some(function) = &self.callback {
+            self.inner
+                .remove_event_listener_with_callback("click", function);
         }
     }
 }

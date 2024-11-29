@@ -1,9 +1,8 @@
 mod board;
 pub mod color;
-pub mod dom;
 mod puzzle;
 #[allow(unused_imports)]
-use crate::dom::console_log;
+use crate::console_log;
 use board::Board;
 use board::Card;
 use board::Selection;

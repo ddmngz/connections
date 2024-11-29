@@ -13,17 +13,6 @@ use wasm_bindgen_futures::JsFuture;
 use web_sys::{console, Document, Element, Window};
 static GAME_STATE: RwLock<GameState> = RwLock::new(GameState::empty());
 
-macro_rules! console_log {
-    ($expr:expr) => (web_sys::console::log_1(&(AsRef::<str>::as_ref($expr)).into()));
-    ($($y:expr),+) => (
-        console_log!(
-            &format!($($y),+)
-        )
-    );
-}
-
-pub(crate) use console_log;
-
 pub fn main() {
     let Some(window) = web_sys::window() else {
         show_error(PopUp::Dom);

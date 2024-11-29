@@ -55,8 +55,6 @@ pub fn create(elem: CustomElem, document: &Document) -> Node {
     template.content().into()
 }
 
-use web_sys::HtmlElement;
-
 pub enum AnimationType {
     Jump,
     Shake,
@@ -87,7 +85,7 @@ impl AnimationType {
     }
 }
 
-use crate::game::dom::console_log;
+use crate::dom::console_log;
 use gloo_timers::future::TimeoutFuture;
 use wasm_bindgen_futures::spawn_local;
 use wasm_bindgen_futures::JsFuture;

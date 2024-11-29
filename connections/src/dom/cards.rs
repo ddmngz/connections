@@ -3,16 +3,16 @@ use super::button::ButtonId;
 use super::callbacks;
 
 #[allow(unused_imports)]
-use crate::dom::console_log;
+use crate::console_log;
+use crate::dom::element_ops;
 use crate::game::color::Color;
-use crate::game::dom::element_ops;
 use wasm_bindgen::JsCast;
 use web_sys::Element;
 use web_sys::HtmlBrElement;
 use web_sys::HtmlElement;
 use web_sys::Text;
 
-use crate::game::dom::element_ops::CollectionVec;
+use crate::dom::element_ops::CollectionVec;
 use crate::game::GameState;
 use std::collections::VecDeque;
 use std::rc::Rc;
