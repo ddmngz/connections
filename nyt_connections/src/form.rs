@@ -40,14 +40,11 @@ thread_local! {
     });
 }
 
-#[wasm_bindgen]
-pub fn setup() {
-    DOM.with(Dom::init);
-}
-
-#[wasm_bindgen]
-pub fn setup_with_code(code: &str) {
-    DOM.with(|dom| dom.init_with_code(code));
+pub fn setup(code: Option<&str>) {
+    match code {
+        Some(code) => DOM.with(|dom| dom.init_with_code(code)),
+        None => DOM.with(Dom::init),
+    };
 }
 
 fn encode() {
@@ -175,11 +172,14 @@ impl Dom {
         let url = format!("?game={}", code);
         self.url.set_search(&url);
         *self.link.write().unwrap() = Some(self.url.href());
-        console::log_1(&code.into())
+        console::log_1(&format!("updating code to {}", url).into());
     }
 
     fn render_url(&self) {
-        self.link_button.set_class_name("button");
+        if let Some(link) = self.link.read().unwrap().as_ref() {
+            self.link_button.set_href(link);
+            self.link_button.set_class_name("button");
+        }
         self.copy_link_button.set_class_name("button");
     }
 

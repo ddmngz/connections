@@ -3,6 +3,7 @@ use std::ops::DerefMut;
 use std::ops::Index;
 use std::ops::Range;
 use wasm_bindgen::JsCast;
+use web_sys::Document;
 use web_sys::HtmlCollection;
 
 pub struct CollectionVec<T: JsCast> {
@@ -34,6 +35,11 @@ impl<T: JsCast> CollectionVec<T> {
             i += 1;
         }
         Self { array }
+    }
+
+    pub fn class(document: &Document, class: &str) -> Self {
+        let collection = document.get_elements_by_class_name(class);
+        Self::new(&collection)
     }
 }
 

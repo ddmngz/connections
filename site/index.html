@@ -23,9 +23,8 @@
       <p> Make your game, then start playing!</p>
 
   </header>
-  <body>
 
-<div class="game" >  
+<div class="game" id="game" >  
   <div class="board" id="board">
       <div class="matched-set " id="blue"> 
           <input type="text" placeholder="theme" class="theme">
@@ -85,6 +84,109 @@
   <a class="hidden_button" id="random_game" target="_blank">Play a Random Game</a>
 
   <dialog class="pop-up" id="copier">Copied to clipboard!</dialog>
-  </body>
-</html>
+</div>
 
+
+<template id = "card">
+	<div class="card"></div>
+</template>
+
+<template id = "board-template">
+	<div class="card"></div>
+	<div class="card"></div>
+	<div class="card"></div>
+	<div class="card"></div>
+
+	<div class="card"></div>
+	<div class="card"></div>
+	<div class="card"></div>
+	<div class="card"></div>
+
+	<div class="card"></div>
+	<div class="card"></div>
+	<div class="card"></div>
+	<div class="card"></div>
+
+	<div class="card"></div>
+	<div class="card"></div>
+	<div class="card"></div>
+	<div class="card"></div>
+</template>
+
+
+<template id = "remaining-tries">
+      Mistakes remaining:
+     <span class="dot"></span>
+     <span class="dot"></span>
+     <span class="dot"></span>
+     <span class="dot"></span> 
+</template>
+
+<template id = "connections-game">
+<div class="container" >  
+<div class="game" >  
+    <p> Match pairs of four!</p>
+    <board></board>
+  <div class="board" id="board">
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+
+      <div class="card"></div>
+      <div class="card"></div>
+      <div class="card"></div>
+      <div class="card"></div>
+      <div class="card"></div>
+      <div class="card"></div>
+      <div class="card" ></div>
+      <div class="card"></div>
+      <div class="card"></div>
+      <div class="card"></div>
+      <div class="card"></div>
+      <div class="card"></div>
+  </div> 
+
+  <div class="remaining_tries"> 
+      Mistakes remaining:
+     <span class="dot"></span>
+     <span class="dot"></span>
+     <span class="dot"></span>
+     <span class="dot"></span> 
+  </div>
+
+  <div class="Buttons"> 
+    <div class="button" id="shuffle"> Shuffle </div> 
+    <div class="button hidden" id="deselect"> Deselect All</div>
+    <div class="button hidden" id="submit"> Submit</div>
+  </div>
+
+
+
+    <dialog class="pop-up" id="away">One Away...</dialog>
+    <dialog class="pop-up" id="already">Already Guessed!</dialog>
+
+  <br>
+  </div>
+  </div>
+  <dialog id="endscreen">
+      <header>
+        <div class="end-state" id="win">You Win!</div>
+        <div class="end-state" id="lose">Better luck next time!</div>
+      </header>
+        <div class="Buttons end">
+            <div class="end button enabled" id="again">Play Again</div>
+            <div class="end button" id="see-board">View Board</div>
+	    <div>
+            <div class="end button enabled" id="share">Copy Link</div>
+            <dialog class="pop-up" id="copied">Copied to clipboard!</dialog>
+	    </div>
+            <div class="end button enabled" id="edit-me">Edit This Puzzle</div>
+            <div class="end button enabled" id="new-puzzle">Make another Puzzle</div>
+        </div>
+    </dialog>
+
+</template>
+
+
+</html>

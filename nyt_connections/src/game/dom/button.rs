@@ -33,7 +33,10 @@ pub fn init_buttons(document: &Document, window: Window) -> Result<[Button; 8], 
 }
 
 #[derive(Clone)]
-pub struct Button(HtmlDivElement);
+pub struct Button{
+    inner:HtmlDivElement,
+    callback:Option<Function>,
+};
 
 #[derive(Debug, Error)]
 pub enum ButtonError {
@@ -45,24 +48,36 @@ pub enum ButtonError {
 
 impl Button {
     pub fn disable(&self) {
-        let _ = self.0.class_list().add_1("hidden");
+        let _ = self.inner.class_list().add_1("hidden");
     }
 
     pub fn enable(&self) {
-        let _ = self.0.class_list().remove_1("hidden");
+        let _ = self.inner.class_list().remove_1("hidden");
     }
 
     pub fn new(document: &Document, id: ButtonId) -> Result<Self, DomError> {
         let button = element_ops::new(document, id)?;
-        Ok(Self(button))
+        Ok(Self{inner:button, callback:None})
     }
 
     pub fn register(&mut self, function: Function) {
-        let _ = self.0.add_event_listener_with_callback("click", &function);
+        let _ = self.inner.add_event_listener_with_callback("click", &function);
+        self.callback = Some(function);
     }
 
-    pub fn deregister(&mut self, function: Function) {
-        let _ = self.0.add_event_listener_with_callback("click", &function);
+    pub fn reregister(&mut self) -> bool{
+        if let Some(function) = &self.callback{
+            let _ = self.inner.add_event_listener_with_callback("click", function);
+            true
+        }else{
+            false
+        }
+    }
+
+    pub fn deregister(&mut self) {
+        if let Some(function) = &self.callback{
+            self.inner.remove_event_listener_with_callback("click", function);
+        }
     }
 }
 
@@ -123,7 +138,7 @@ mod button_builder {
                 shuffle: Button::new(document, ButtonId::Shuffle)?,
                 already_guessed: PopUp::new(document, PopUpId::AlreadyGuessed)?,
                 one_away: PopUp::new(document, PopUpId::OneAway)?,
-                copied: PopUp::new(document, PopUpId::OneAway)?,
+                copied: PopUp::new(document, PopUpId::CopyToClipboard)?,
                 end_screen: EndScreen::new(document)?,
                 selection: Selection::new(document),
                 cards: Cards::new_handle(document).unwrap(),
@@ -282,9 +297,17 @@ mod button_builder {
             let end_screen = self.end_screen.clone();
             let deselect = self.deselect.clone();
             let mut dots = self.dots.clone();
+            let selection = self.selection.clone();
             let mut cards = self.cards.clone();
             let callback = callbacks::to_function_mut(move || {
-                callbacks::try_again(&mut cards, &end_screen, &mut dots, &submit, &deselect);
+                callbacks::try_again(
+                    &mut cards,
+                    &end_screen,
+                    &mut dots,
+                    &submit,
+                    &deselect,
+                    selection.clone(),
+                );
             });
             try_again.register(callback);
             vec.push(try_again);

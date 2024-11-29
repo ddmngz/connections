@@ -1,10 +1,17 @@
 use super::button::Button;
 use super::button::ButtonId;
 use super::callbacks;
+
 #[allow(unused_imports)]
 use crate::dom::console_log;
 use crate::game::color::Color;
 use crate::game::dom::element_ops;
+use wasm_bindgen::JsCast;
+use web_sys::Element;
+use web_sys::HtmlBrElement;
+use web_sys::HtmlElement;
+use web_sys::Text;
+
 use crate::game::dom::element_ops::CollectionVec;
 use crate::game::GameState;
 use std::collections::VecDeque;
@@ -20,6 +27,7 @@ pub struct Cards {
     collection: HtmlCollection,
     cards: VecDeque<Card>,
     document: Document,
+    board: HtmlDivElement,
 }
 
 pub fn init_cards(document: &Document, state: &GameState) -> Option<Cards> {
@@ -59,6 +67,7 @@ impl Cards {
 
     fn init(document: &Document) -> Option<Self> {
         let collection = document.get_elements_by_class_name("card");
+        let board = element_ops::new(document, "board").unwrap();
         let cards = CollectionVec::new(&collection)
             .into_iter()
             .map(Card)
@@ -66,14 +75,22 @@ impl Cards {
         Some(Self {
             collection,
             cards,
+            board,
             document: document.clone(),
         })
     }
 
-    pub fn reset(&mut self) {
-        //let cards = Self::init(document)?;
-        // need way to represent that the board could be fewer cards
-        //self.register_callbacks();
+    pub fn reset(
+        &mut self,
+        deselect: Button,
+        submit: Button,
+        selection: Selection,
+        game: &GameState,
+    ) {
+        let new_board = Board::new(&self.document);
+        new_board.replace_board(&self.board);
+        self.register_callbacks(deselect, submit, selection);
+        self.render_text(game)
     }
 
     fn register_callbacks(&mut self, deselect: Button, submit: Button, selection: Selection) {
@@ -252,10 +269,39 @@ impl Card {
     }
 }
 
-use wasm_bindgen::JsCast;
-use web_sys::HtmlBrElement;
-use web_sys::HtmlElement;
-use web_sys::Text;
+struct Board(Node);
+use element_ops::CustomElem;
+use web_sys::Node;
+impl Board {
+    fn new(document: &Document) -> Self {
+        let board_div: Node = element_ops::create(CustomElem::Board, document);
+        Self(board_div)
+    }
+
+    fn replace_board(self, board: &HtmlDivElement) {
+        let _ = board.replace_children_with_node_1(&self.0);
+    }
+}
+
+struct NewCard(HtmlDivElement);
+impl NewCard {
+    fn new(document: &Document) -> Self {
+        let new_div: HtmlDivElement = document.create_element("div").unwrap().dyn_into().unwrap();
+        let _ = new_div.class_list().add_1("card");
+        Self(new_div)
+    }
+
+    fn attach(self, element: &Element) -> Card {
+        let _ = element.append_with_node_1(&self.0);
+        Card(self.0)
+    }
+
+    fn replace(self, element: &Element) -> Card {
+        let _ = element.replace_with_with_node_1(&self.0);
+        Card(self.0)
+    }
+}
+
 pub struct MatchedSet(HtmlDivElement);
 impl MatchedSet {
     fn new(color: Color, document: &Document, state: &GameState) -> Self {

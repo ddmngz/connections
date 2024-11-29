@@ -150,21 +150,21 @@ pub fn try_again(
     dots: &mut Dots,
     submit: &Button,
     deselect: &Button,
+    selection: Selection,
 ) {
-    GAME_STATE.write().unwrap().start_over();
-    cards.reset();
+    {
+        GAME_STATE.write().unwrap().start_over();
+    }
+    cards.reset(
+        deselect.clone(),
+        submit.clone(),
+        selection,
+        &GAME_STATE.read().unwrap(),
+    );
     dots.reset();
     submit.disable();
     deselect.disable();
     end_screen.close();
-}
-
-pub async fn share(url: &mut Url, clipboard: &Clipboard, copied: PopUp) {
-    let code = GAME_STATE.read().unwrap().puzzle_code();
-    url.set_game(&code);
-    let new_url = url.to_string();
-    clipboard.copy_async(&new_url).await;
-    copied.pop_up().await;
 }
 
 #[derive(Clone)]
@@ -194,7 +194,7 @@ impl ShareCallback {
         self.url.set_game(&code);
         let new_url = self.url.to_string();
         self.clipboard.copy_async(&new_url).await;
-        self.copied.pop_up().await;
+        self.copied.slide_in().await;
     }
 }
 

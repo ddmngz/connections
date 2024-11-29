@@ -80,7 +80,6 @@ input[type=text].theme{
     display:flex;
     flex-grow:0;
     flex-shrink:1;
-    justify:center;
 }
 
 input[type=text]{
@@ -189,7 +188,6 @@ input[type=text]{
   border-radius: 6px;
   width: 35%;
   margin:auto;
-  align:center;
   text-align: center;
   font-weight: 600;
   font-size:16px;
@@ -235,7 +233,6 @@ input[type=text]{
   border-radius: 60px;
   width: max-content;
   margin:auto;
-  align:center;
 
   text-align: center;
   font-weight: 500;
@@ -258,7 +255,6 @@ input[type=text]{
   border-radius: 60px;
   width: max-content;
   margin:auto;
-  align:center;
   cursor: default;
 
   text-align: center;
@@ -297,7 +293,6 @@ input[type=text]{
   width: max-content;
   align-items: center;
   text-align: center;
-  min-height: 100;
   background-color:black;
   color:white;
   font-size:medium;  
@@ -484,9 +479,19 @@ dialog[open]{
 }
 */
 
+#share{
+    position:relative;
+    z-index:2;
+}
+
 #copied{
+    padding:2px 5px;
+    font-size:10px;
+    z-index:0;
+    /*
     position: fixed;
     top: 0;
+    */
 }
 
 .end.button{

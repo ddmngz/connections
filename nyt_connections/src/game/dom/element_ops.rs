@@ -7,6 +7,7 @@ use js_sys::Object;
 use web_sys::Document;
 use web_sys::Element;
 use web_sys::HtmlCollection;
+use web_sys::HtmlTemplateElement;
 
 use std::time::Duration;
 
@@ -35,12 +36,33 @@ pub fn new<T: JsCast>(document: &Document, id: impl AsRef<str>) -> Result<T, Dom
     })
 }
 
+pub enum CustomElem {
+    Board,
+    Game,
+}
+
+impl AsRef<str> for CustomElem {
+    fn as_ref(&self) -> &'static str {
+        match self {
+            Self::Board => "board-template",
+            Self::Game => "connections-game",
+        }
+    }
+}
+use web_sys::Node;
+pub fn create(elem: CustomElem, document: &Document) -> Node {
+    let template: HtmlTemplateElement = new(document, &elem).unwrap();
+    template.content().into()
+}
+
+use web_sys::HtmlElement;
+
 pub enum AnimationType {
     Jump,
     Shake,
     PopUp,
     ShowModal,
-    CopyToClipboard,
+    SlideIn,
 }
 
 impl AnimationType {
@@ -50,7 +72,7 @@ impl AnimationType {
             Self::Shake => 500.0,
             Self::ShowModal => 500.0,
             Self::PopUp => 2000.0,
-            Self::CopyToClipboard => todo!(),
+            Self::SlideIn => 1000.0,
         }
     }
 
@@ -60,7 +82,7 @@ impl AnimationType {
             AnimationType::Shake => shake_keyframes(),
             AnimationType::ShowModal => todo!(),
             AnimationType::PopUp => popup_keyframes(),
-            Self::CopyToClipboard => todo!(),
+            AnimationType::SlideIn => slide_in_keyframes(),
         }
     }
 }
@@ -214,7 +236,49 @@ fn shake_keyframes() -> Object {
     array.push(&left_3);
     array.push(&end);
 
-    array.into()
+    let object = array.into();
+
+    console_log!("{:?}", object);
+    object
+}
+
+fn slide_in_keyframes() -> Object {
+    let array = Array::new();
+    let transform_string = JsValue::from_str("transform");
+
+    let under_button: Object = JsValue::from_str("translate(0,-165%)").into();
+    let shown: Object = JsValue::from_str("translate(0,-90%)").into();
+
+    let easing = JsValue::from_str("easing");
+    let ease_out: Object = JsValue::from_str("ease-out").into();
+    let ease_in: Object = JsValue::from_str("ease-in").into();
+
+    let offset: Object = JsValue::from_str("offset").into();
+    let twenty_five: Object = JsValue::from_f64(0.25).into();
+    let seventy_five: Object = JsValue::from_f64(0.75).into();
+
+    let start = Object::new();
+    let display_start = Object::new();
+    let display_end = Object::new();
+    let end = Object::new();
+
+    let _ = Reflect::set(&start, &transform_string, &under_button);
+
+    let _ = Reflect::set(&display_start, &transform_string, &shown);
+    let _ = Reflect::set(&display_start, &offset, &twenty_five);
+    Object::assign(&display_end, &start);
+    let _ = Reflect::set(&display_end, &easing, &ease_out);
+    let _ = Reflect::set(&offset, &offset, &seventy_five);
+    let _ = Reflect::set(&display_end, &transform_string, &shown);
+    Object::assign(&end, &start);
+
+    array.push(&start);
+    array.push(&display_start);
+    array.push(&display_end);
+    array.push(&end);
+    let object = array.into();
+    console_log!("{:?}", object);
+    object
 }
 
 #[derive(Error, Debug)]

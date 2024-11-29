@@ -6,6 +6,9 @@ use web_sys::Document;
 use web_sys::HtmlSpanElement;
 use web_sys::Window;
 
+#[allow(unused_imports)]
+use crate::dom::console_log;
+
 #[derive(Clone)]
 pub struct Url(web_sys::Url);
 
@@ -68,56 +71,51 @@ impl Clipboard {
     pub async fn copy_async(&self, string: &str) -> JsFuture {
         JsFuture::from(self.copy_raw(string))
     }
-
-    pub fn copy(&self, string: &str) {
-        self.copy_raw(string);
-    }
 }
 
 pub mod dots {
     use super::*;
 
+    use web_sys::HtmlCollection;
+
     #[derive(Clone)]
     pub struct Dots {
-        dots: [Dot; 4],
-        remaining: Option<NumDots>,
-    }
-
-    #[repr(usize)]
-    #[derive(Copy, Clone)]
-    enum NumDots {
-        One = 1,
-        Two = 2,
-        Three = 3,
-        Four = 4,
+        dots: Vec<Dot>,
+        handle: HtmlCollection,
     }
 
     impl Dots {
         pub fn new(document: &Document) -> Self {
-            let dots = document.get_elements_by_class_name("dot");
-            let dots = CollectionVec::<HtmlSpanElement>::new(&dots);
+            let handle = document.get_elements_by_class_name("dot");
+            let dots: Vec<Dot> = CollectionVec::<HtmlSpanElement>::new(&handle)
+                .into_iter()
+                .map(Dot)
+                .collect();
             assert!(dots.len() == 4);
-            let dots: [Dot; 4] = std::array::from_fn(|index| Dot(dots[index].clone()));
-            let remaining = Some(NumDots::Four);
-            Self { dots, remaining }
+            Self { dots, handle }
+        }
+
+        fn update(&mut self) {
+            self.dots = CollectionVec::<HtmlSpanElement>::new(&self.handle)
+                .into_iter()
+                .map(Dot)
+                .collect();
         }
 
         pub fn hide_one(&mut self) {
-            let Some(num_dots) = self.remaining else {
-                return;
-            };
-            let i = (num_dots as usize) - 1;
-            self.dots[i].hide();
-            self.remaining = match num_dots {
-                NumDots::One => None,
-                NumDots::Two => Some(NumDots::One),
-                NumDots::Three => Some(NumDots::Two),
-                NumDots::Four => Some(NumDots::Three),
-            }
+            self.update();
+            let Some(dot) = self.last() else { return };
+            dot.hide()
+        }
+
+        fn last(&self) -> Option<&Dot> {
+            self.dots
+                .iter()
+                .rfind(|&dot| dot.state() == DotState::Enabled)
         }
 
         pub fn reset(&mut self) {
-            self.remaining = Some(NumDots::Four);
+            self.update();
             for dot in &self.dots {
                 dot.show();
             }
@@ -134,13 +132,25 @@ pub mod dots {
         fn hide(&self) {
             let _ = self.0.class_list().add_1("hidden");
         }
+
+        fn state(&self) -> DotState {
+            if self.0.class_list().contains("hidden") {
+                DotState::Disabled
+            } else {
+                DotState::Enabled
+            }
+        }
+    }
+    #[derive(PartialEq)]
+    enum DotState {
+        Enabled,
+        Disabled,
     }
 }
 
 pub mod pop_up {
     use super::element_ops;
     use super::element_ops::AnimationType;
-    use crate::game::dom::console_log;
     use element_ops::DomError;
     use strum::AsRefStr;
     use web_sys::Document;
@@ -165,20 +175,21 @@ pub mod pop_up {
         }
 
         pub async fn pop_up(&self) {
-            console_log!("opening");
             self.0.show();
-            console_log!("animating");
             let _ = element_ops::animate_later(&self.0, AnimationType::PopUp).await;
-            console_log!("done animating");
             self.0.close();
-            console_log!("closing");
+        }
+
+        pub async fn slide_in(&self) {
+            self.0.show();
+            let _ = element_ops::animate_later(&self.0, AnimationType::SlideIn).await;
+            self.0.close();
         }
     }
 }
 
 pub mod end_screen {
     use super::element_ops;
-    use element_ops::AnimationType;
     use web_sys::Document;
     use web_sys::DomTokenList;
     use web_sys::HtmlDialogElement;
@@ -213,7 +224,7 @@ pub mod end_screen {
             let _ = self.modal.show_modal();
             let shown_div = match state {
                 EndState::Win => &self.win_div,
-                EndState::Lost => &self.win_div,
+                EndState::Lost => &self.lose_div,
             };
             let _ = shown_div.add_1("enabled");
         }
