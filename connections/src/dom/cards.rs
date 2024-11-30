@@ -38,9 +38,12 @@ pub fn init_cards(document: &Document, state: &GameState) -> Option<Cards> {
 
 impl Cards {
     pub fn new(document: &Document) -> Option<Self> {
+        let deselect = Button::new(document, ButtonId::DeselectAll).ok()?;
+        let submit = Button::new(document, ButtonId::Submit).ok()?;
+        let selection = Selection::new(document);
         let mut cards = Self::init(document)?;
 
-        //cards.register_callbacks(deselect, submit, selection);
+        cards.register_callbacks(deselect, submit, selection);
         Some(cards)
     }
 
@@ -58,6 +61,10 @@ impl Cards {
         self.render_text(state);
     }
 
+    pub fn new_handle(document: &Document) -> Option<Self> {
+        Self::init(document)
+    }
+
     fn init(document: &Document) -> Option<Self> {
         let collection = document.get_elements_by_class_name("card");
         let board = element_ops::new(document, "board").unwrap();
@@ -73,10 +80,32 @@ impl Cards {
         })
     }
 
-    pub fn reset(&mut self, game: &GameState) {
+    pub fn reset(
+        &mut self,
+        deselect: Button,
+        submit: Button,
+        selection: Selection,
+        game: &GameState,
+    ) {
         let new_board = Board::new(&self.document);
         new_board.replace_board(&self.board);
+        self.register_callbacks(deselect, submit, selection);
         self.render_text(game)
+    }
+
+    fn register_callbacks(&mut self, deselect: Button, submit: Button, selection: Selection) {
+        self.update_cards_list();
+        let deselect = Rc::new(deselect);
+        let submit = Rc::new(submit);
+        for (index, card) in self.new_cards_list().into_iter().enumerate() {
+            let mut selection_handle = selection.clone();
+            let card_ref = card.clone();
+            let deselect = deselect.clone();
+            let submit = submit.clone();
+            let closure = move || card.on_click(index, &mut selection_handle, &deselect, &submit);
+            let function = callbacks::to_function_mut(closure);
+            card_ref.register_callback(&function);
+        }
     }
 
     fn new_cards_list(&mut self) -> VecDeque<Card> {
@@ -103,14 +132,6 @@ impl Cards {
         self.cards.iter().for_each(Card::toggle_shuffling);
         self.render_text(state);
         self.cards.iter().for_each(Card::toggle_shuffling);
-    }
-
-    pub fn for_each(&self) -> impl Iterator<Item = &Card> {
-        self.cards.iter()
-    }
-
-    pub fn into_iter(&self) -> impl Iterator<Item = Card> {
-        self.cards.clone().into_iter()
     }
 }
 
@@ -173,10 +194,6 @@ pub struct Card(HtmlDivElement);
 use super::GAME_STATE;
 use web_sys::js_sys::Function;
 impl Card {
-    pub fn register(&self, f: impl FnMut() + 'static) {
-        let f = callbacks::to_function_mut(f);
-        self.0.add_event_listener_with_callback("click", &f);
-    }
     pub fn toggle_selected(&self) {
         let _ = self.0.class_list().toggle("selected");
     }
@@ -207,7 +224,7 @@ impl Card {
         element_ops::animate_then(&self.0, AnimationType::Jump).await;
     }
 
-    pub fn on_click(
+    fn on_click(
         &self,
         index: usize,
         selection: &mut Selection,

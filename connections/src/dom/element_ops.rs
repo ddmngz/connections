@@ -85,7 +85,7 @@ impl AnimationType {
     }
 }
 
-use crate::console_log;
+use crate::dom::console_log;
 use gloo_timers::future::TimeoutFuture;
 use wasm_bindgen_futures::spawn_local;
 use wasm_bindgen_futures::JsFuture;

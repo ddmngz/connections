@@ -7,7 +7,7 @@ use web_sys::HtmlSpanElement;
 use web_sys::Window;
 
 #[allow(unused_imports)]
-use crate::console_log;
+use crate::dom::console_log;
 
 #[derive(Clone)]
 pub struct Url(web_sys::Url);

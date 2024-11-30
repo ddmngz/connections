@@ -1,11 +1,9 @@
 mod button;
 mod cards;
-mod singleton;
 
 mod callbacks;
 mod element_ops;
 mod misc_objects;
-use crate::console_log;
 use crate::form;
 use crate::game::GameState;
 use misc_objects::Url;
@@ -92,19 +90,15 @@ fn setup_onload(document: Document, window: Window) -> Result<(), PopUp> {
     on_load(&document, &element, window);
     Ok(())
 }
-use singleton::WEB_PAGE;
+
 fn on_load(document: &Document, document_element: &Element, window: Window) {
     console_log!(
         "loaded, trying to remove attribute hidden from element {:?}",
         document_element
     );
     document_element.remove_attribute("hidden").unwrap();
-    WEB_PAGE.init(window, document.clone()).unwrap();
-    WEB_PAGE.setup_callbacks();
-    /*
     let _cards = cards::init_cards(document, &GAME_STATE.read().unwrap()).unwrap();
     let _buttons = button::init_buttons(document, window).unwrap();
-    */
 }
 
 #[derive(Debug)]

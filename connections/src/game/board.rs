@@ -1,7 +1,7 @@
 use super::color::Color;
 use super::puzzle::PuzzleRef;
 use super::ConnectionPuzzle;
-use crate::console_log;
+use crate::dom::console_log;
 use rand::prelude::SliceRandom;
 use std::mem::MaybeUninit;
 use std::ops::Index;
