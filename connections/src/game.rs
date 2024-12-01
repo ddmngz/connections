@@ -13,18 +13,12 @@ pub use puzzle::ConnectionSet;
 use puzzle::TranscodingError;
 use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen]
 #[derive(Debug)]
 pub struct GameState {
     mistakes: u8,
     successes: u8,
     board: Board,
     prev_attempts: Vec<Selection>,
-}
-
-#[wasm_bindgen]
-pub fn start_state() -> GameState {
-    GameState::default()
 }
 
 impl GameState {
@@ -38,7 +32,7 @@ impl GameState {
         */
     }
 
-    fn default() -> Self {
+    pub fn default() -> Self {
         let puzzle = ConnectionPuzzle::default();
         Self::new(puzzle)
     }
@@ -186,7 +180,6 @@ pub enum SelectionSuccess {
     Matched(Color),
 }
 
-#[wasm_bindgen]
 #[repr(u8)]
 pub enum GameFailiure {
     Mismatch = 0,

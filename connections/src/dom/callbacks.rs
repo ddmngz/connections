@@ -9,7 +9,7 @@ use web_sys::Window;
 use web_sys::console;
 
 #[allow(unused_imports)]
-use crate::dom::console_log;
+use crate::console_log;
 
 use super::button::Button;
 use super::cards::Cards;
@@ -19,7 +19,7 @@ use super::misc_objects::end_screen::EndScreen;
 use super::misc_objects::end_screen::EndState;
 use super::misc_objects::Clipboard;
 use super::misc_objects::Url;
-use crate::dom::GAME_STATE;
+use crate::game_page::GAME_STATE;
 
 use super::misc_objects::pop_up::PopUp;
 
@@ -109,6 +109,7 @@ impl SubmitCallback {
                 self.submit_button.enable();
                 self.end_screen.show(EndState::Lost)
             }
+            GameFailiure::AlreadyTried => self.already_guessed.pop_up().await,
             e => {
                 self.submit_button.enable();
                 self.dots.hide_one();
@@ -116,8 +117,7 @@ impl SubmitCallback {
                 match e {
                     GameFailiure::Mismatch | GameFailiure::NotEnough => self.selection.shake(),
                     GameFailiure::OneAway => self.one_away.pop_up().await,
-                    GameFailiure::AlreadyTried => self.already_guessed.pop_up().await,
-                    GameFailiure::Lost => unreachable!(),
+                    GameFailiure::Lost | GameFailiure::AlreadyTried => unreachable!(),
                 }
             }
         }

@@ -121,8 +121,6 @@ impl Cards {
 
     pub fn render_text(&self, state: &GameState) {
         let offset = 16 - self.cards.len();
-        let offset_msg = offset.to_string();
-        console_log!(&offset_msg);
         for (index, card) in self.cards.iter().enumerate() {
             card.update_text(state, index + offset);
         }
@@ -191,7 +189,7 @@ impl Selection {
 #[derive(Clone, Debug)]
 pub struct Card(HtmlDivElement);
 
-use super::GAME_STATE;
+use crate::pages::game_page::GAME_STATE;
 use web_sys::js_sys::Function;
 impl Card {
     pub fn toggle_selected(&self) {

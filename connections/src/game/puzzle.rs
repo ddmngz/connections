@@ -203,7 +203,6 @@ impl ConnectionPuzzle {
     }
 }
 
-#[wasm_bindgen]
 #[derive(Debug, Error)]
 pub enum TranscodingError {
     #[error("couldn't decode")]

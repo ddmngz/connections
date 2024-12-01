@@ -1,4 +1,4 @@
-import init from './pkg/nyt_connections.js';
+import init, {start_editor} from './pkg/nyt_connections.js';
 
 async function load_asm(){
     const module = await WebAssembly.compileStreaming(fetch("./pkg/nyt_connections_bg.wasm"));
@@ -14,6 +14,7 @@ addEventListener("load", (_) => {
 
 
 await load_asm();
+start_editor();
 
 //run();
 

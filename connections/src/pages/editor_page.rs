@@ -5,6 +5,9 @@ use std::sync::RwLock;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 use wasm_bindgen_futures::JsFuture;
+use web_sys::HtmlDivElement;
+use web_sys::HtmlTemplateElement;
+
 use web_sys::console;
 use web_sys::Clipboard;
 use web_sys::Document;
@@ -17,6 +20,12 @@ use web_sys::Window;
 thread_local! {
     pub static DOM: Dom = Dom::new().unwrap();
     pub static SUBMIT_CALLBACK: Closure<dyn FnMut()> = Closure::<dyn FnMut()>::new(encode);
+    pub static TRY_GAME: Closure<dyn FnMut()> = Closure::<dyn FnMut()>::new(move ||{
+        DOM.with(|dom|{
+            dom.try_game();
+
+        })
+    });
     pub static CLIPBOARD_CALLBACK: Closure<dyn FnMut()> = Closure::<dyn FnMut()>::new(move || {
         DOM.with(|dom|{
             let future = dom.copy_to_clipboard().unwrap();
@@ -59,8 +68,7 @@ fn encode() {
     let puzzle = ConnectionPuzzle::new(args_ref[0], args_ref[1], args_ref[2], args_ref[3]);
     let code = puzzle.encode();
     DOM.with(|dom| {
-        dom.update_url(&code);
-        dom.render_url()
+        dom.update_url(code);
     });
 }
 
@@ -80,13 +88,15 @@ struct Dom {
     yellow: InputSet,
     green: InputSet,
     button: Element,
-    link_button: HtmlAnchorElement,
+    link_button: Element,
     copy_link_button: Element,
     url: Url,
     clipboard: Clipboard,
-    link: RwLock<Option<String>>,
+    code: RwLock<Option<String>>,
     copied: Element,
     window: Window,
+    template: HtmlTemplateElement,
+    game_div: HtmlDivElement,
 }
 
 impl Dom {
@@ -100,19 +110,21 @@ impl Dom {
         let button = document
             .get_element_by_id("submit")
             .expect("no button found");
-        let link_button = get_anchor_elem(
-            document
-                .get_element_by_id("go_to_game")
-                .expect("no button found"),
-        );
+        let link_button = document
+            .get_element_by_id("go_to_game")
+            .expect("no button found");
         let copy_link_button = document
             .get_element_by_id("copy_link")
             .expect("no button found");
 
+        let template: HtmlTemplateElement =
+            crate::dom::element_ops::new(&document, "connections-game").unwrap();
+        let game_div: HtmlDivElement = crate::dom::element_ops::new(&document, "game").unwrap();
+
         let url = Url::new(&document.url().map_err(|_| ())?).map_err(|_| ())?;
         let clipboard = window.navigator().clipboard();
         let (blue, purple, yellow, green) = InputSet::new_set(&document).map_err(|_| ())?;
-        let link = RwLock::new(None);
+        let code = RwLock::new(None);
         let copied = document
             .get_element_by_id("copier")
             .expect("no button found")
@@ -124,13 +136,15 @@ impl Dom {
             blue,
             purple,
             yellow,
+            game_div,
             green,
             button,
             url,
             clipboard,
-            link,
+            code,
             copied,
             window,
+            template,
         })
     }
 
@@ -168,27 +182,38 @@ impl Dom {
         })
     }
 
-    fn update_url(&self, code: &str) {
+    fn update_url(&self, code: String) {
         let url = format!("?game={}", code);
         self.url.set_search(&url);
-        *self.link.write().unwrap() = Some(self.url.href());
+        *self.code.write().unwrap() = Some(code);
         console::log_1(&format!("updating code to {}", url).into());
     }
 
-    fn render_url(&self) {
-        if let Some(link) = self.link.read().unwrap().as_ref() {
-            self.link_button.set_href(link);
-            self.link_button.set_class_name("button");
-        }
-        self.copy_link_button.set_class_name("button");
+    fn enable_try_game(&self) {
+        self.link_button.set_class_name("button");
     }
 
+    fn try_game(&self) {
+        let code = self.code.read().unwrap();
+        let code = code.as_ref().unwrap();
+
+        self.game_div
+            .replace_with_with_node_1(&self.template.content())
+            .unwrap();
+        let _ = crate::pages::game_page::init_state(code);
+    }
+
+    fn disable_try_game(&self) {}
+
     fn copy_to_clipboard(&self) -> Option<JsFuture> {
-        self.link
-            .read()
-            .unwrap()
-            .as_ref()
-            .map(|link| JsFuture::from(self.clipboard.write_text(link)))
+        let code = self.code.read().unwrap();
+
+        let code = code.as_ref()?;
+
+        let url = self.url.clone();
+        let code = format!("?game={}", code);
+        url.set_search(&code);
+        Some(JsFuture::from(self.clipboard.write_text(&url.href())))
     }
 
     fn copy_handle(&self) -> Element {

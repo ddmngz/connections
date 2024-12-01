@@ -1,4 +1,4 @@
-import init from './pkg/nyt_connections.js';
+import init, {start_game} from './pkg/nyt_connections.js';
 
 async function run() {
     const url = "./pkg/nyt_connections_bg.wasm";
@@ -19,3 +19,4 @@ addEventListener("load", (_) => {
 });
 
 await run();
+start_game();
