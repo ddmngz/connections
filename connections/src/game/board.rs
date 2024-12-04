@@ -123,7 +123,7 @@ impl Board {
     }
 
     fn card_theme(&self, card: PuzzleRef) -> &str {
-        self.puzzle.by_color(card.color()).theme()
+        self.puzzle.by_color(card.color()).theme_ref()
     }
 
     fn card_word(&self, card: PuzzleRef) -> &str {
@@ -132,7 +132,7 @@ impl Board {
 
     pub fn matched_set_text(&self, color: Color) -> (&str, String) {
         let set = self.puzzle.by_color(color);
-        (set.theme(), set.words())
+        (set.theme_ref(), set.words())
     }
 }
 

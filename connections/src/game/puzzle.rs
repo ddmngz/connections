@@ -1,5 +1,3 @@
-use crate::wasm_bindgen;
-
 use super::color::Color;
 use base64::{engine::general_purpose::URL_SAFE, Engine as _};
 use flate2::write::GzDecoder;
@@ -10,10 +8,12 @@ use std::array;
 use std::io::Write;
 use std::ops::Deref;
 use thiserror::Error;
+use wasm_bindgen::prelude::*;
 
 #[allow(unused_imports)]
 use web_sys::console;
 
+#[wasm_bindgen]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ConnectionPuzzle {
     yellow: YellowSet,
@@ -22,18 +22,22 @@ pub struct ConnectionPuzzle {
     green: GreenSet,
 }
 
+#[wasm_bindgen]
 #[repr(transparent)]
 #[derive(Serialize, Deserialize, Debug)]
 struct BlueSet(ConnectionSet);
 
+#[wasm_bindgen]
 #[repr(transparent)]
 #[derive(Serialize, Deserialize, Debug)]
 struct YellowSet(ConnectionSet);
 
+#[wasm_bindgen]
 #[repr(transparent)]
 #[derive(Serialize, Deserialize, Debug)]
 struct PurpleSet(ConnectionSet);
 
+#[wasm_bindgen]
 #[repr(transparent)]
 #[derive(Serialize, Deserialize, Debug)]
 struct GreenSet(ConnectionSet);
@@ -67,10 +71,22 @@ impl Deref for YellowSet {
     }
 }
 
+#[wasm_bindgen]
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct ConnectionSet {
-    pub theme: String,
-    pub words: [String; 4],
+    theme: String,
+    words: [String; 4],
+}
+
+#[wasm_bindgen]
+impl ConnectionSet {
+    pub fn theme(&self) -> String {
+        self.theme.clone()
+    }
+
+    pub fn word_list(&self) -> Box<[String]> {
+        Box::new(self.words.clone())
+    }
 }
 
 impl ConnectionSet {
@@ -82,15 +98,19 @@ impl ConnectionSet {
         }
     }
 
+    pub fn theme_ref(&self) -> &str {
+        &self.theme
+    }
+
+    pub fn words_list_ref(&self) -> [&str; 4] {
+        self.words.each_ref().map(|str| str.as_str())
+    }
+
     const fn empty_set() -> Self {
         Self {
             theme: String::new(),
             words: [const { String::new() }; 4],
         }
-    }
-
-    pub fn theme(&self) -> &str {
-        &self.theme
     }
 
     pub fn words(&self) -> String {
@@ -118,6 +138,80 @@ impl std::ops::Index<PuzzleRef> for ConnectionPuzzle {
     }
 }
 
+/*
+#[wasm_bindgen(module = "/index.js")]
+extern "C" {
+    pub type PuzzleArgs;
+    #[wasm_bindgen(method, getter)]
+    fn theme(this: &PuzzleArgs) -> String;
+
+    #[wasm_bindgen(method, getter)]
+    fn word(this: &PuzzleArgs, index: usize) -> String;
+
+}
+
+fn args_to_tuple(args: &PuzzleArgs) -> (String, [String; 4]) {
+    let arr: [String; 4] = [args.word(0), args.word(1), args.word(2), args.word(3)];
+    (args.theme(), arr)
+}
+
+fn args_as_ref((theme, words): &(String, [String; 4])) -> (&str, [&str; 4]) {
+    let arr: [&str; 4] = [&words[0], &words[1], &words[2], &words[3]];
+    (theme, arr)
+}
+*/
+
+fn js_args(slice: &[String]) -> (&str, [&str; 4]) {
+    assert_eq!(slice.len(), 5);
+    (&slice[0], [&slice[1], &slice[2], &slice[3], &slice[4]])
+}
+
+#[wasm_bindgen]
+impl ConnectionPuzzle {
+    pub fn decode(code: &str) -> Result<Self, TranscodingError> {
+        let compressed_bytes = URL_SAFE
+            .decode(code)
+            .map_err(|_| TranscodingError::Base64)?;
+
+        let mut decoder = GzDecoder::new(Vec::new());
+        decoder
+            .write_all(&compressed_bytes[..])
+            .map_err(|_| TranscodingError::Gzip)?;
+
+        let postcard_bytes = decoder.finish().unwrap();
+        postcard::from_bytes(&postcard_bytes[..]).map_err(|_| TranscodingError::Postcard)
+    }
+
+    pub fn from_js(
+        yellow: Box<[String]>,
+        blue: Box<[String]>,
+        purple: Box<[String]>,
+        green: Box<[String]>,
+    ) -> Self {
+        let yellow = js_args(&yellow);
+        let blue = js_args(&blue);
+        let purple = js_args(&purple);
+        let green = js_args(&green);
+        Self::new(yellow, blue, purple, green)
+    }
+
+    pub fn new_code(
+        yellow: Box<[String]>,
+        blue: Box<[String]>,
+        purple: Box<[String]>,
+        green: Box<[String]>,
+    ) -> String {
+        Self::from_js(yellow, blue, purple, green).encode()
+    }
+
+    pub fn encode(&self) -> String {
+        let postcard_bytes: Vec<u8> = postcard::to_allocvec(&self).expect("error serializing");
+        let mut encoder = GzEncoder::new(Vec::new(), Compression::best());
+        encoder.write_all(&postcard_bytes).unwrap();
+        let compressed_bytes = encoder.finish().unwrap();
+        URL_SAFE.encode(&compressed_bytes)
+    }
+}
 impl ConnectionPuzzle {
     pub const fn empty() -> Self {
         let yellow = YellowSet(ConnectionSet::empty_set());
@@ -152,28 +246,6 @@ impl ConnectionPuzzle {
         }
     }
 
-    pub fn encode(&self) -> String {
-        let postcard_bytes: Vec<u8> = postcard::to_allocvec(&self).expect("error serializing");
-        let mut encoder = GzEncoder::new(Vec::new(), Compression::best());
-        encoder.write_all(&postcard_bytes).unwrap();
-        let compressed_bytes = encoder.finish().unwrap();
-        URL_SAFE.encode(&compressed_bytes)
-    }
-
-    pub fn decode(code: &str) -> Result<Self, TranscodingError> {
-        let compressed_bytes = URL_SAFE
-            .decode(code)
-            .map_err(|_| TranscodingError::Base64)?;
-
-        let mut decoder = GzDecoder::new(Vec::new());
-        decoder
-            .write_all(&compressed_bytes[..])
-            .map_err(|_| TranscodingError::Gzip)?;
-
-        let postcard_bytes = decoder.finish().unwrap();
-        postcard::from_bytes(&postcard_bytes[..]).map_err(|_| TranscodingError::Postcard)
-    }
-
     pub fn theme(&self, reference: PuzzleRef) -> &str {
         let set = self.by_color(reference.color());
         &set[reference.word_index]
@@ -203,6 +275,7 @@ impl ConnectionPuzzle {
     }
 }
 
+#[wasm_bindgen]
 #[derive(Debug, Error)]
 pub enum TranscodingError {
     #[error("couldn't decode")]

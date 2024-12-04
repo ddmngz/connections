@@ -5,15 +5,15 @@ use std::sync::RwLock;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 use wasm_bindgen_futures::JsFuture;
-use web_sys::HtmlDivElement;
-use web_sys::HtmlTemplateElement;
-
 use web_sys::console;
 use web_sys::Clipboard;
 use web_sys::Document;
 use web_sys::Element;
 use web_sys::HtmlAnchorElement;
+use web_sys::HtmlDialogElement;
+use web_sys::HtmlDivElement;
 use web_sys::HtmlInputElement;
+use web_sys::HtmlTemplateElement;
 use web_sys::Url;
 use web_sys::Window;
 
@@ -87,18 +87,19 @@ struct Dom {
     purple: InputSet,
     yellow: InputSet,
     green: InputSet,
-    button: Element,
-    link_button: Element,
-    copy_link_button: Element,
+    create_game: HtmlDivElement,
+    try_game: HtmlDivElement,
+    copy_link: HtmlDivElement,
     url: Url,
     clipboard: Clipboard,
     code: RwLock<Option<String>>,
-    copied: Element,
+    copied: HtmlDialogElement,
     window: Window,
     template: HtmlTemplateElement,
     game_div: HtmlDivElement,
 }
 
+use crate::dom::element_ops;
 impl Dom {
     fn window_handle(&self) -> Window {
         self.window.clone()
@@ -107,15 +108,11 @@ impl Dom {
     fn new() -> Result<Self, ()> {
         let window = web_sys::window().expect("no window found");
         let document = window.document().expect("no document found");
-        let button = document
-            .get_element_by_id("submit")
-            .expect("no button found");
-        let link_button = document
-            .get_element_by_id("go_to_game")
-            .expect("no button found");
-        let copy_link_button = document
-            .get_element_by_id("copy_link")
-            .expect("no button found");
+
+        let create_game = element_ops::new(&document, "submit").expect("no button found");
+        let try_game = element_ops::new(&document, "go_to_game").expect("no button found");
+
+        let copy_link = element_ops::new(&document, "copy_link").expect("no button found");
 
         let template: HtmlTemplateElement =
             crate::dom::element_ops::new(&document, "connections-game").unwrap();
@@ -131,14 +128,14 @@ impl Dom {
             .dyn_into()
             .map_err(|_| ())?;
         Ok(Self {
-            copy_link_button,
-            link_button,
+            create_game,
+            copy_link,
+            try_game,
             blue,
             purple,
             yellow,
             game_div,
             green,
-            button,
             url,
             clipboard,
             code,
@@ -170,13 +167,13 @@ impl Dom {
 
     fn init(&self) {
         SUBMIT_CALLBACK.with(|closure| {
-            self.button
+            self.create_game
                 .add_event_listener_with_callback("click", closure.as_ref().unchecked_ref())
                 .expect("listener error")
         });
 
         CLIPBOARD_CALLBACK.with(|closure| {
-            self.copy_link_button
+            self.copy_link
                 .add_event_listener_with_callback("click", closure.as_ref().unchecked_ref())
                 .expect("listener error")
         })
@@ -190,7 +187,7 @@ impl Dom {
     }
 
     fn enable_try_game(&self) {
-        self.link_button.set_class_name("button");
+        self.try_game.set_class_name("button");
     }
 
     fn try_game(&self) {
@@ -216,7 +213,7 @@ impl Dom {
         Some(JsFuture::from(self.clipboard.write_text(&url.href())))
     }
 
-    fn copy_handle(&self) -> Element {
+    fn copy_handle(&self) -> HtmlDialogElement {
         self.copied.clone()
     }
 
@@ -244,10 +241,10 @@ impl InputSet {
     }
 
     fn set_with_set(&self, set: &ConnectionSet) {
-        self.theme_input.set_value(&set.theme);
+        self.theme_input.set_value(&set.theme());
         use std::iter::zip;
-        for (input, word) in zip(&self.other_inputs, &set.words) {
-            input.set_value(word);
+        for (input, word) in zip(&self.other_inputs, set.word_list()) {
+            input.set_value(&word);
         }
     }
 

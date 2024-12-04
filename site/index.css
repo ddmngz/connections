@@ -26,8 +26,9 @@ p{
     flex-direction: column;
     justify-content:space-evenly;
     z-index: -0; /* Specify a stack order in case you're using a different order for other elements */
-    margin: auto;
+    margin:auto;
     height:70vh;
+    align-items:center;
 }
 
 .board_container{
@@ -41,7 +42,6 @@ p{
 
     top: 25%;
     bottom:50%;
-    margin: auto;
   z-index: -0; /* Specify a stack order in case you're using a different order for other elements */
 
 }
@@ -58,7 +58,6 @@ p{
   width: calc(3 * 8px + 4 * 150px);
   min-height: 0;
   min-width: 0;
-  margin:auto;
   position:relative;
   /*left: 400px;*/
   /*position:;*/
@@ -232,14 +231,16 @@ input[type=text]{
   padding: 20px;
   border-radius: 60px;
   width: max-content;
-  margin:auto;
+  margin:0 auto;
 
   text-align: center;
   font-weight: 500;
   border-style:solid;
   border-color:var(--connections-extra-dark-beige);
   border-width:thin;
-  transition: border-color ease .15s, color ease .15s
+  transition: border-color ease .15s, color ease .15s;
+  z-index:3px;
+  position:relative;
 }
 
 .button.hidden{
@@ -270,7 +271,7 @@ input[type=text]{
   position:relative;
   margin-top: 10px;
   flex-direction: row;
-  align-items:center;
+  align-items:flex-start;
   justify-content:center;
 }
 
@@ -345,6 +346,7 @@ input[type=text]{
 
 .button{
     padding:11px;
+    margin:0 auto;
 }
 
 .hidden_button{
@@ -433,11 +435,10 @@ input[type=text]{
 
 
 #copier{
+    z-index:1;
     opacity:0;
     display:block;
-    position:fixed;
-    bottom: 0;
-    opacity:0;
+    position:absolute;
     transition: opacity .2s ease-out;
 }
 
