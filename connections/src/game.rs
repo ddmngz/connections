@@ -5,6 +5,7 @@ mod puzzle;
 use crate::console_log;
 use board::Board;
 use board::Card;
+use board::OwnedCard;
 use board::Selection;
 use board::SelectionFailiure;
 use color::Color;
@@ -14,6 +15,7 @@ use puzzle::TranscodingError;
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug)]
+#[wasm_bindgen]
 pub struct GameState {
     mistakes: u8,
     successes: u8,
@@ -21,15 +23,10 @@ pub struct GameState {
     prev_attempts: Vec<Selection>,
 }
 
+#[wasm_bindgen]
 impl GameState {
     pub fn puzzle_code(&self) -> String {
         self.board.encode()
-    }
-
-    pub fn render_cards(&mut self) {
-        /*self.dom
-            .render_cards(&self.board, self.board.matched_cards.len() * 4);
-        */
     }
 
     pub fn default() -> Self {
@@ -46,9 +43,12 @@ impl GameState {
         //self.dom.deactivate_dot();
     }
 
-    pub fn check_selection(&mut self) -> Result<SelectionSuccess, GameFailiure> {
+    pub fn card_text(&self, index: usize) -> String {
+        self.board.get_word(index).to_string()
+    }
+
+    pub fn check_selection(&mut self) -> Result<JsSelectionSuccess, GameFailiure> {
         use GameFailiure::*;
-        //use SelectionFailiure::*;
         use SelectionSuccess::*;
 
         if self.prev_attempts.contains(&self.board.selection) {
@@ -64,9 +64,9 @@ impl GameState {
                 self.successes += 1;
 
                 if almost_won {
-                    Ok(Won(color))
+                    Ok(Won(color).into())
                 } else {
-                    Ok(Matched(color))
+                    Ok(Matched(color).into())
                 }
             }
             Err(SelectionFailiure::Mismatch) => {
@@ -93,7 +93,6 @@ impl GameState {
     }
     pub fn shuffle(&mut self) {
         self.board.shuffle();
-        self.render_cards();
     }
 
     pub fn clear_selection(&mut self) {
@@ -104,10 +103,6 @@ impl GameState {
         self.dom.disable_deselect();
         self.dom.disable_submit();
         */
-    }
-
-    pub fn get(&self, index: usize) -> Card {
-        self.board.get(index)
     }
 
     /*
@@ -138,15 +133,29 @@ impl GameState {
         self.board.reset();
         self.prev_attempts.clear();
         //self.dom.reset();
-        self.render_cards();
     }
 
-    pub fn matched_set_text(&self, color: Color) -> (&str, String) {
-        self.board.matched_set_text(color)
+    pub fn connection_set(&self, color: Color) -> ConnectionSet {
+        self.board.set(color).clone()
     }
 
     pub fn clipboard_copied(&self) {
         console_log!("copied to clipboard");
+    }
+
+    pub fn get_owned(&self, index: usize) -> OwnedCard {
+        self.board.get(index).into()
+    }
+
+    pub fn new(puzzle: ConnectionPuzzle) -> Self {
+        let board = Board::new(puzzle);
+        let prev_attempts = Vec::new();
+        Self {
+            mistakes: 0,
+            successes: 0,
+            board,
+            prev_attempts,
+        }
     }
 }
 
@@ -162,15 +171,8 @@ impl GameState {
         }
     }
 
-    pub fn new(puzzle: ConnectionPuzzle) -> Self {
-        let board = Board::new(puzzle);
-        let prev_attempts = Vec::new();
-        Self {
-            mistakes: 0,
-            successes: 0,
-            board,
-            prev_attempts,
-        }
+    pub fn get(&self, index: usize) -> Card {
+        self.board.get(index)
     }
 }
 
@@ -180,11 +182,50 @@ pub enum SelectionSuccess {
     Matched(Color),
 }
 
-#[repr(u8)]
+#[wasm_bindgen]
+#[derive(Copy, Clone)]
+pub enum SelectionSuccessTags {
+    Won,
+    Matched,
+}
+
+#[wasm_bindgen]
+pub struct JsSelectionSuccess {
+    #[wasm_bindgen(getter_with_clone)]
+    pub color: js_sys::JsString,
+    pub result: SelectionSuccessTags,
+}
+
+impl From<SelectionSuccess> for JsSelectionSuccess {
+    fn from(other: SelectionSuccess) -> Self {
+        match other {
+            SelectionSuccess::Won(color) => Self {
+                color: color.into(),
+                result: SelectionSuccessTags::Won,
+            },
+            SelectionSuccess::Matched(color) => Self {
+                color: color.into(),
+                result: SelectionSuccessTags::Matched,
+            },
+        }
+    }
+}
+
+#[wasm_bindgen]
 pub enum GameFailiure {
-    Mismatch = 0,
-    NotEnough = 1,
-    OneAway = 2,
-    Lost = 3,
-    AlreadyTried = 4,
+    Mismatch,
+    NotEnough,
+    OneAway,
+    Lost,
+    AlreadyTried,
+}
+
+impl From<SelectionFailiure> for GameFailiure {
+    fn from(failiure: SelectionFailiure) -> Self {
+        match failiure {
+            SelectionFailiure::Mismatch => Self::Mismatch,
+            SelectionFailiure::NotEnough => Self::NotEnough,
+            SelectionFailiure::OneAway => Self::OneAway,
+        }
+    }
 }

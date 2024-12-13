@@ -18,17 +18,13 @@ p{
     margin:auto;
     font-weight:normal;
 }
-
-
-
 .game{
     display:flex;
     flex-direction: column;
     justify-content:space-evenly;
-    z-index: -0; /* Specify a stack order in case you're using a different order for other elements */
     margin:auto;
     height:70vh;
-    align-items:center;
+    width: 70vh;
 }
 
 .board_container{
@@ -46,8 +42,6 @@ p{
 
 }
 
-
-
 .board {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -55,7 +49,6 @@ p{
   height: calc(3 * 8px + 4 * 80px);
   background-color: #FFFFFF;
   gap:8px;
-  width: calc(3 * 8px + 4 * 150px);
   min-height: 0;
   min-width: 0;
   position:relative;
@@ -93,25 +86,7 @@ input[type=text]{
     display:inline;
 }
 
-.matched-set.yellow {
-    display:inline-block;
-    background-color: var(--connections-yellow);
-}
 
-.matched-set.green {
-    display:inline-block;
-    background-color: var(--connections-green);
-}
-
-.matched-set.purple {
-    display:inline-block;
-    background-color: var(--connections-maroon);
-}
-
-.matched-set.blue {
-    display:inline-block;
-    background-color: var(--connections-blue);
-}
 
 .word{
     display:inline;
@@ -132,6 +107,73 @@ input[type=text]{
   position:sticky;
   transition: background-color .25s, color .25s;
     height: 40px;
+}
+
+connections-set {
+  grid-column-end: span 4;
+  border-radius: 6px;
+  padding: 20px;
+  font-size: 20px;
+  font-weight: 400;
+  text-align: center;
+  cursor: default;
+  text-transform: uppercase;
+  font-family: "Libre Franklin", sans-serif;
+  font-style: normal; 
+  z-index: -1; /* Specify a stack order in case you're using a different order for other elements */
+  position:sticky;
+  transition: background-color .25s, color .25s;
+    height: 40px;
+}
+
+
+connections-set:state(yellow){
+    display:inline-block;
+    background-color: var(--connections-yellow);
+}
+
+connections-set:state(green){
+    display:inline-block;
+    background-color: var(--connections-green);
+}
+
+
+connections-set:state(purple){
+    display:inline-block;
+    background-color: var(--connections-maroon);
+}
+
+connections-set:state(blue){
+    display:inline-block;
+    background-color: var(--connections-blue);
+}
+
+
+
+
+
+
+connections-card{
+  height: 40px;
+  line-height:40px;
+  border-radius: 6px;
+  background-color: var(--connections-light-beige);
+  padding: 20px;
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-family: "Libre Franklin", sans-serif;
+  font-style: normal; 
+  z-index: -1; /* Specify a stack order in case you're using a different order for other elements */
+  position:sticky;
+  transition: background-color .25s, color .25s;
+}
+
+connections-card[selected=""] {
+  background-color: var(--connections-darker-beige);
+  color:white;
 }
 
 .card {
@@ -216,7 +258,6 @@ input[type=text]{
 .cover{
   height: calc(3 * 8px + 80px);
   padding: 20px;
-  width: calc(3 * 8px + 4 * 150px);
   min-height: 0;
   min-width: 0;
   margin:auto;
@@ -225,7 +266,7 @@ input[type=text]{
   position: fixed
 }
 
-.button{
+button{
   cursor: pointer;
   font-size:15px;
   padding: 20px;
@@ -239,32 +280,17 @@ input[type=text]{
   border-color:var(--connections-extra-dark-beige);
   border-width:thin;
   transition: border-color ease .15s, color ease .15s;
-  z-index:3px;
+  z-index:3;
   position:relative;
+  background-color:white;
 }
 
-.button.hidden{
+button:disabled{
   cursor: default;
   border-color:var(--connections-dark-beige);
   color:var(--connections-dark-beige);
 }
 
-.hidden_button{
-  cursor: default;
-  font-size:15px;
-  padding:20px;
-  border-radius: 60px;
-  width: max-content;
-  margin:auto;
-  cursor: default;
-
-  text-align: center;
-  font-weight: 500;
-  border-style:solid;
-  border-color:var(--connections-dark-beige);
-  color:var(--connections-dark-beige);
-  border-width:thin;
-}
 
 .Buttons{
   display: flex;
@@ -332,7 +358,6 @@ input[type=text]{
     }
 
 .board {
-    width: 80vw;
   min-height: 0;
   min-width: 0;
   margin:auto;
@@ -344,14 +369,12 @@ input[type=text]{
   z-index: 1; /* Specify a stack order in case you're using a different order for other elements */
 }
 
-.button{
+button{
     padding:11px;
     margin:0 auto;
 }
 
-.hidden_button{
-    padding:11px;
-}
+
 }
 
 

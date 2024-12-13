@@ -1,4 +1,5 @@
 import init, {ConnectionPuzzle} from './pkg/nyt_connections.js';
+import {start_game} from './game.js';
 
 async function load_asm(){
     const url = "./pkg/nyt_connections_bg.wasm";
@@ -154,18 +155,19 @@ function start_editor(){
     }
 }
 
-class Button{
+export class Button{
     constructor(id, callback) {
         this.div = document.getElementById(id);
         this.callback = callback;
     }
     enable(){
-        this.div.classList.remove("hidden");
+        this.div.disabled = false;
         this.div.addEventListener("click", this.callback);
     }
 
     disable(){
-        this.div.classList.add("hidden");
+
+        this.div.disabled = true;
         this.div.removeEventListener("click", this.callback);
     }
 }
@@ -190,14 +192,20 @@ class TryGame extends Button{
 }
 
 function try_game(){
+    const puzzle = get_puzzle();
+    start_game(Dom.game_div, puzzle);
 }
 
 
-
-
-function enable_game(){
+function get_puzzle(){
     const {yellow, blue, green, purple} = Dom.inputs.to_args();
     const puzzle = ConnectionPuzzle.from_js(yellow, blue, purple, green);
+    return puzzle;
+
+}
+
+function enable_game(){
+    const puzzle = get_puzzle();
     Dom.puzzle = puzzle;
     Dom.try_game.enable();
     Dom.copy_link.enable();

@@ -2,9 +2,11 @@ use super::color::Color;
 use super::puzzle::PuzzleRef;
 use super::ConnectionPuzzle;
 use crate::console_log;
+use crate::game::ConnectionSet;
 use rand::prelude::SliceRandom;
 use std::mem::MaybeUninit;
 use std::ops::Index;
+use wasm_bindgen::prelude::*;
 #[allow(unused_imports)]
 use web_sys::console;
 
@@ -25,6 +27,15 @@ impl Board {
             theme: self.card_theme(card),
             state: self.card_state(card),
         }
+    }
+
+    pub fn get_word(&self, index: usize) -> &str {
+        let card = self.order[index];
+        self.card_word(card)
+    }
+
+    pub fn set(&self, color: Color) -> &ConnectionSet {
+        self.puzzle.by_color(color)
     }
     pub fn reset(&mut self) {
         self.selection.clear();
@@ -136,7 +147,8 @@ impl Board {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Copy)]
+#[wasm_bindgen]
 pub enum CardState {
     Selected,
     Normal,
@@ -148,6 +160,27 @@ impl From<SelectState> for CardState {
         match select {
             SelectState::Normal => Self::Normal,
             SelectState::Selected => Self::Selected,
+        }
+    }
+}
+use js_sys::JsString;
+#[wasm_bindgen]
+pub struct OwnedCard {
+    #[wasm_bindgen(getter_with_clone)]
+    pub word: JsString,
+    #[wasm_bindgen(getter_with_clone)]
+    pub theme: JsString,
+    pub color: Color,
+    pub state: CardState,
+}
+
+impl From<Card<'_>> for OwnedCard {
+    fn from(card: Card<'_>) -> Self {
+        Self {
+            word: card.word.into(),
+            theme: card.theme.into(),
+            color: card.color,
+            state: card.state,
         }
     }
 }
@@ -186,6 +219,7 @@ pub enum SelectState {
     Normal,
 }
 
+#[wasm_bindgen]
 pub enum SelectionFailiure {
     Mismatch,
     NotEnough,

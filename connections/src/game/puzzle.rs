@@ -14,7 +14,7 @@ use wasm_bindgen::prelude::*;
 use web_sys::console;
 
 #[wasm_bindgen]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ConnectionPuzzle {
     yellow: YellowSet,
     blue: BlueSet,
@@ -24,22 +24,22 @@ pub struct ConnectionPuzzle {
 
 #[wasm_bindgen]
 #[repr(transparent)]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct BlueSet(ConnectionSet);
 
 #[wasm_bindgen]
 #[repr(transparent)]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct YellowSet(ConnectionSet);
 
 #[wasm_bindgen]
 #[repr(transparent)]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct PurpleSet(ConnectionSet);
 
 #[wasm_bindgen]
 #[repr(transparent)]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct GreenSet(ConnectionSet);
 
 impl Deref for BlueSet {
@@ -72,7 +72,7 @@ impl Deref for YellowSet {
 }
 
 #[wasm_bindgen]
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 pub struct ConnectionSet {
     theme: String,
     words: [String; 4],

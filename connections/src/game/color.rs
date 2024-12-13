@@ -1,5 +1,7 @@
+use wasm_bindgen::prelude::*;
 #[repr(u8)]
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[wasm_bindgen]
 pub enum Color {
     Yellow = 0,
     Blue = 1,
@@ -15,6 +17,18 @@ impl AsRef<str> for Color {
             Self::Purple => "purple",
             Self::Green => "green",
         }
+    }
+}
+
+impl Into<js_sys::JsString> for Color {
+    fn into(self) -> js_sys::JsString {
+        match self {
+            Self::Yellow => "yellow",
+            Self::Blue => "blue",
+            Self::Purple => "purple",
+            Self::Green => "green",
+        }
+        .into()
     }
 }
 
