@@ -171,10 +171,16 @@ connections-card{
   transition: background-color .25s, color .25s;
 }
 
-connections-card[selected=""] {
+connections-card:state(selected){
   background-color: var(--connections-darker-beige);
   color:white;
 }
+
+connections-card:state(moving){
+  transition: none
+}
+
+
 
 .card {
   height: 40px;

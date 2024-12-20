@@ -145,6 +145,10 @@ impl Board {
         let set = self.puzzle.by_color(color);
         (set.theme_ref(), set.words())
     }
+
+    pub fn swap(&mut self, a: usize, b: usize) {
+        self.order.swap(a, b);
+    }
 }
 
 #[derive(PartialEq, Eq, Clone, Copy)]

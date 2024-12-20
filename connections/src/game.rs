@@ -47,6 +47,8 @@ impl GameState {
         self.board.get_word(index).to_string()
     }
 
+    fn swap_on_success(&mut self) {}
+
     pub fn check_selection(&mut self) -> Result<JsSelectionSuccess, GameFailiure> {
         use GameFailiure::*;
         use SelectionSuccess::*;
@@ -62,7 +64,7 @@ impl GameState {
         match self.board.test_selection() {
             Ok(color) => {
                 self.successes += 1;
-
+                self.swap_on_success();
                 if almost_won {
                     Ok(Won(color).into())
                 } else {
@@ -156,6 +158,10 @@ impl GameState {
             board,
             prev_attempts,
         }
+    }
+
+    pub fn swap(&mut self, a: usize, b: usize) {
+        self.board.swap(a, b);
     }
 }
 

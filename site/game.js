@@ -1,200 +1,283 @@
-import init, {GameState, GameFailiure, JsSelectionSuccess} from './pkg/nyt_connections.js';
+import init, {GameState, GameFailiure, JsSelectionSuccess, CardState, SelectionSuccessTags} from './pkg/nyt_connections.js';
 import {Button} from './index.js';
-
-
 
 let elems = null;
 
 
 export function start_game(parent, puzzle){
-	register_elems();
-	init_board(parent);
-	init_elems(puzzle);
+    register_elems();
+    init_board(parent);
+    init_elems(puzzle);
 }
 
 
 function register_elems(){
-	customElements.define("connections-card", Card )
-	customElements.define("connections-set", ConnectionSet)
+    customElements.define("connections-card", Card )
+    customElements.define("connections-set", ConnectionSet)
 }
 
 function init_board(parent){
-	const template = document.getElementById(
-		"connections-game",
-	).content;
-	parent.replaceWith(template.cloneNode(true));
+    const template = document.getElementById(
+        "connections-game",
+    ).content;
+    parent.replaceWith(template.cloneNode(true));
 }
 
 function init_elems(puzzle){
-	const game = puzzle ? GameState.new(puzzle) : GameState.new();
-	elems = {game:game};
-	elems = {
-		game:game,
-		board:new Board(),
-		endscreen:document.getElementById("end-screen"),
-		shuffle: new Button("shuffle", shuffle),
-		deselect: new Button("deselect", deselect),
-		submit: new Button("submit", submit),
-		remaining: new RemainingTries(),
-		one_away: document.getElementById("away"),
-		already_guessed: document.getElementById("already"),
-		end_screen: new EndScreen(),
-                matched_rows:0
-	};
-	elems.selection = new Selection(elems.board);
+    const game = puzzle ? GameState.new(puzzle) : GameState.new();
+    elems = {game:game};
+    elems = {
+        game:game,
+        board:new Board(),
+        endscreen:document.getElementById("end-screen"),
+        shuffle: new Button("shuffle", shuffle),
+        deselect: new Button("deselect", deselect),
+        submit: new Button("submit", submit),
+        remaining: new RemainingTries(),
+        one_away: document.getElementById("away"),
+        already_guessed: document.getElementById("already"),
+        end_screen: new EndScreen(),
+        matches:0
+    };
+    elems.selection = new Selection(elems.board);
 }
 
 function render_card(card){
-	card.textContent = elems.game.card_text(card.index);
+    card.textContent = elems.game.card_text(card.index);
 }
 
-
 class Board{
-	constructor(){
-		this.board = document.getElementById('board');
-		this.cards_list = board.querySelectorAll('connections-card');
-		this.forEach(render_card);
-	}
+    constructor(){
+        this.board = document.getElementById('board');
+        this.cards_list = board.querySelectorAll('connections-card');
+        this.forEach(render_card);
+        this.start_offset = 0;
+    }
 
+    async move_selection(){
+        const source_indices = Array.from(elems.selection.all).map((card) => (card.index));
+        const dest_indices = Array.from(this.cards_list).slice(this.start_offset, this.rowEnd).map((card) => (card.index));
 
+        const cards_i = source_indices.map((card, index) => {
+            return ({source:card, dest:dest_indices[index]});
+        });
 
-	forEach(closure){
-		this.cards_list.forEach(closure);
-	}
+        console.log(cards_i);
 
-	update(){
+        const cards = cards_i.map(({source, dest}) => {
+            return ({source:this.at(source), dest:this.at(dest)});
+        })
 
-		this.cards_handle = this.board.querySelectorAll('connections-card');
-	}
+        console.log(cards);
 
-	add_set(set){
-            const last = this.cards_list[3];
-            const slice = Array.from(this.cards_list).slice(0,3);
-            console.log(slice);
-            for(const card of slice){
-                console.log("removing ", card);
-                card.remove();
+        cards.forEach(({source, dest}) => {
+            source.disabled = true;
+            dest.disabled = true;
+        });
+
+        console.log(cards_i);
+        
+        for(const {source, dest} of cards_i.slice(0,3)){
+            this.update();
+            const s = this.at(source); 
+            const d = this.at(dest); 
+
+            this.swap_move(s,d);
+            if(s.index >= this.rowEnd){
+                s.disabled = false;
             }
-            last.replaceWith(set);
-	}
+        }
+        this.update();
+        const s = this.at(cards_i[3].source); 
+        const d = this.at(cards_i[3].dest); 
+        await this.swap_move(s,d);
+        if(s.index >= this.rowEnd){
+            s.disabled = false;
+        }
+        this.start_offset+=4;
+        this.update();
+    }
 
-	show(){
-		this.forEach((card) => {card.from_blank()});
-	}
+    get rowEnd(){
+        this.start_offset + 4;
+    }
 
-	hide(){
-		this.forEach((card) => {card.to_blank()});
-	}
+    at(index){
+        return this.cards_list[index - this.start_offset];
+    }
 
-	update_text(){
-		this.forEach((card) => {card.render_text()});
-	}
+    forEach(closure){
+        this.cards_list.forEach(closure);
+    }
+
+    update(){
+        this.cards_list = this.board.querySelectorAll('connections-card');
+    }
+
+    add_set(set){
+        console.log("add_set");
+        const last = this.cards_list[3];
+        const slice = Array.from(this.cards_list).slice(0,3);
+        for(const card of slice){
+            console.log("removing ", card);
+            card.remove();
+        }
+        last.replaceWith(set);
+        elems.selection.update();
+    }
+
+    async swap_move(card_1, card_2){
+        const c1pos = card_1.getBoundingClientRect();
+        const c2pos = card_2.getBoundingClientRect();
+        const two_to_one = [c2pos.x - c1pos.x, c2pos.y - c1pos.y];
+        const one_to_two = [c1pos.x - c2pos.x, c1pos.y - c2pos.y];
+        const to_2 = [
+            {transform: "translate(0,0)"},
+            {transform: `translate(${one_to_two[0]}px,${one_to_two[1]}px)`}
+        ];
+        const to_1 = [
+            {transform: "translate(0,0)"},
+            {transform: `translate(${two_to_one[0]}px,${two_to_one[1]}px)`}
+        ];
+        const promises = [card_1.animate(to_1,250).finished,card_2.animate(to_2,250).finished];
+        await Promise.all(promises);
+        return(this.swap(card_1,card_2));
+    }
+
+    swap(source, dest){
+        const two = dest.cloneNode(true);
+        const one = source.cloneNode(true);
+        two.index = source.index;
+        one.index = dest.index;
+        two.selected = dest.selected;
+        one.selected = source.selected;
+
+        dest.replaceWith(one);
+        source.replaceWith(two);
+        one.full_render();
+        two.full_render();
+        return(one);
+    }
+
+    show(){
+        this.forEach((card) => {card.from_blank()});
+    }
+
+    hide(){
+        this.forEach((card) => {card.to_blank()});
+    }
+
+    update_text(){
+        this.forEach((card) => {card.render_text()});
+    }
 }
 
 class Selection{
-	static jump = [
-		{transform:"translate(0,0)"},
-		{transform:"translate(0,-10px)"},
-		{transform:"translate(0,0)"},
-	];
+    static jump = [
+        {transform:"translate(0,0)"},
+        {transform:"translate(0,-10px)"},
+        {transform:"translate(0,0)"},
+    ];
 
-	static shake = [
-		{transform:"translate(0,0)"},
-		{transform:"translate(-2px,0)"},
-		{transform:"translate(2px,0)"},
-		{transform:"translate(-2px,0)"},
-		{transform:"translate(2px,0)"},
-		{transform:"translate(0,0)"},
-	];
+    static shake = [
+        {transform:"translate(0,0)"},
+        {transform:"translate(-2px,0)"},
+        {transform:"translate(2px,0)"},
+        {transform:"translate(-2px,0)"},
+        {transform:"translate(2px,0)"},
+        {transform:"translate(0,0)"},
+    ];
 
-	constructor(){
-		this.arr = document.querySelectorAll('connections-card[selected=""]');
-	}
+    constructor(){
 
-	update(){
-		this.arr = document.querySelectorAll('connections-card[selected=""]');
-	}
+        this.arr = document.querySelectorAll('connections-card:state(selected)');
+    }
 
-        async move(row){
-            // get the top 4 cards
-            // animate swapping grid area for all of them
+    update(){
+        this.arr = document.querySelectorAll('connections-card:state(selected)');
+    }
+
+    get(index){
+        return this.arr[index]
+    }
+
+    get all(){
+        return this.arr;
+    }
+
+
+    async jump(){
+        for(let i = 0; i< 3; i++){
+            this.arr[i].animate(Selection.jump, 450 );
+            await new Promise(r => setTimeout(r, 100));
         }
+        await this.arr[3].animate(Selection.jump, 450 ).finished;
 
-	async jump(){
-		for(let i = 0; i< 3; i++){
-			this.arr[i].animate(Selection.jump, 450 );
-			await new Promise(r => setTimeout(r, 100));
-		}
-		await this.arr[3].animate(Selection.jump, 450 ).finished;
+    }
 
-	}
+    async shake(){
+        this.arr.forEach((card) => {card.animate(Selection.shake,250)});
+        await new Promise(r => setTimeout(r, 100));
+    }
 
-	async shake(){
-		this.arr.forEach((card) => {card.animate(Selection.shake,250)});
-		await new Promise(r => setTimeout(r, 100));
-	}
-
-	get len(){
-		return this.arr.length
-	}
+    get len(){
+        return this.arr.length
+    }
 }
 
 function shuffle(){
-	elems.board.hide();
-	elems.game.shuffle();
-	elems.board.show();
+    elems.board.hide();
+    elems.game.shuffle();
+    elems.board.show();
 
 }
 function deselect(){
-	elems.game.clear_selection();
-	elems.board.forEach((card) => {card.toggleAttribute("selected")});
+    elems.game.clear_selection();
+    elems.board.forEach((card) => {card.toggleAttribute("selected")});
 }
 
 async function submit(){
-	await elems.selection.jump();
-	try{
-		check_selection();
-
-	}catch (e){
-		console.log("failiure");
-		if(e == GameFailiure.AlreadyTried){
-			pop_up(elems.already_guessed);
-			return;
-		}
-		elems.remaining.lose_one();
-		switch(e){
-			case GameFailiure.Mismatch:
-				await elems.selection.shake();
-				break;
-			case GameFailiure.OneAway:
-				pop_up(elems.one_away);
-				break;
-			case GameFailiure.Lost:
-				lost();
-				break;
-		}
-	}
+    await elems.selection.jump();
+    try{
+        await check_selection();
+    }catch (e){
+        if(e == GameFailiure.AlreadyTried){
+            pop_up(elems.already_guessed);
+            return;
+        }
+        elems.remaining.lose_one();
+        switch(e){
+            case GameFailiure.Mismatch:
+                await elems.selection.shake();
+                break;
+            case GameFailiure.OneAway:
+                pop_up(elems.one_away);
+                break;
+            case GameFailiure.Lost:
+                lost();
+                break;
+        }
+    }
 }
 
 function pop_up(modal){
-	const animation = {}
-	modal.animate(animation);
+    const animation = {}
+    modal.animate(animation);
 }
 
-function check_selection(){
-	let success = elems.game.check_selection();
-	console.log(success);
-	update_match(success.color);
-        elems.matches++;
-	if (success.result = SelectionSuccessTags.won){
-		win();
-	}
+async function check_selection(){
+    let success = elems.game.check_selection();
+
+    await update_match(success.color);
+
+    if (success.result = SelectionSuccessTags.Won){
+        win();
+    }
 }
 
 async function update_match(color){
-    await elems.selection.move(elems.matches);
+    await elems.board.move_selection(elems.matches);
     const new_set = new ConnectionSet();
-    console.log(color);
     new_set.theme_color = color;
     elems.board.update();
     elems.board.add_set(new_set);
@@ -218,7 +301,6 @@ function update_buttons(){
 }
 
 function update_submit(len){
-    console.log(len);
     if(len == 4){
         elems.submit.enable();
     }
@@ -250,6 +332,7 @@ class Card extends HTMLElement{
     }
 
     get selected() {
+        this._internals.states;
         return this._internals.states.has("selected");
     }
 
@@ -265,11 +348,31 @@ class Card extends HTMLElement{
     }
 
     set index(index){
-        if (flag) {
+        if (index) {
             this.setAttribute('i', index)
         } else {
             this.removeAttribute('i')
         }
+    }
+
+    set moving(flag){
+        if (flag) {
+            this._internals.states.add("moving");
+        } else {
+            this._internals.states.delete("moving");
+        }
+    }
+
+    get moving(){
+        return this._internals.states.has("moving");
+    }
+
+    get row(){
+        return(Math.floor( this.index / 4) + 1);
+    }
+
+    get column(){
+        return(Math.floor( this.index % 4) + 1);
     }
 
     get disabled(){
@@ -294,18 +397,16 @@ class Card extends HTMLElement{
     }
 
     on_click(){
-        this.toggleAttribute("selected");
+        this.selected = !this.selected;
         elems.game.select(this.index);
         update_buttons();
     }
-
-
 
     full_render(){
         const card = elems.game.get_owned(this.index);
         this.textContent = card.word;
         if(card.state == CardState.Selected){
-            this.selected = "";
+            this.selected = true;
         }
     }
 
@@ -360,19 +461,19 @@ export class ConnectionSet extends HTMLElement{
         shadowRoot.appendChild(templateContent.cloneNode(true));
     }
 
-      get blue() {
-    return this._internals.states.has("blue");
-  }
-
-
-
-  set blue(flag) {
-    if (flag) {
-      this._internals.states.add("blue");
-    } else {
-      this._internals.states.delete("blue");
+    get blue() {
+        return this._internals.states.has("blue");
     }
-  }
+
+
+
+    set blue(flag) {
+        if (flag) {
+            this._internals.states.add("blue");
+        } else {
+            this._internals.states.delete("blue");
+        }
+    }
 
     get yellow() {
         return this._internals.states.has("yellow");
@@ -393,11 +494,9 @@ export class ConnectionSet extends HTMLElement{
 
     set theme_color(color) {
         if (color) {
-            console.log("adding state ", color)
             this._internals.states.add(color);
         } else {
             this._internals.states.delete(color);
         }
-        console.log(this._internals.states);
     }
 }
