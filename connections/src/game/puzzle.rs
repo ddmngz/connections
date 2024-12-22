@@ -4,7 +4,6 @@ use flate2::write::GzDecoder;
 use flate2::write::GzEncoder;
 use flate2::Compression;
 use serde::{Deserialize, Serialize};
-use std::array;
 use std::io::Write;
 use std::ops::Deref;
 use thiserror::Error;
@@ -78,20 +77,49 @@ pub struct ConnectionSet {
     words: [String; 4],
 }
 
+impl From<YellowSet> for ConnectionSet {
+    fn from(set: YellowSet) -> Self {
+        set.0
+    }
+}
+
+impl From<GreenSet> for ConnectionSet {
+    fn from(set: GreenSet) -> Self {
+        set.0
+    }
+}
+
+impl From<PurpleSet> for ConnectionSet {
+    fn from(set: PurpleSet) -> Self {
+        set.0
+    }
+}
+
+impl From<BlueSet> for ConnectionSet {
+    fn from(set: BlueSet) -> Self {
+        set.0
+    }
+}
+
 #[wasm_bindgen]
 impl ConnectionSet {
     pub fn theme(&self) -> String {
         self.theme.clone()
     }
 
-    pub fn word_list(&self) -> Box<[String]> {
+    pub fn words_list(&self) -> Box<[String]> {
         Box::new(self.words.clone())
     }
 }
 
 impl ConnectionSet {
     fn new(theme: &str, words: [&str; 4]) -> Self {
-        let words: [String; 4] = array::from_fn(|index| String::from(words[index]));
+        let words: [String; 4] = [
+            words[0].into(),
+            words[1].into(),
+            words[2].into(),
+            words[3].into(),
+        ];
         Self {
             theme: theme.into(),
             words,
@@ -169,6 +197,9 @@ fn js_args(slice: &[String]) -> (&str, [&str; 4]) {
 #[wasm_bindgen]
 impl ConnectionPuzzle {
     pub fn decode(code: &str) -> Result<Self, TranscodingError> {
+        if code == "debug" {
+            return Ok(Self::debug());
+        }
         let compressed_bytes = URL_SAFE
             .decode(code)
             .map_err(|_| TranscodingError::Base64)?;
@@ -211,8 +242,49 @@ impl ConnectionPuzzle {
         let compressed_bytes = encoder.finish().unwrap();
         URL_SAFE.encode(&compressed_bytes)
     }
+
+    pub fn yellow_owned(&self) -> ConnectionSet {
+        self.yellow.clone().into()
+    }
+
+    pub fn blue_owned(&self) -> ConnectionSet {
+        self.blue.clone().into()
+    }
+    pub fn green_owned(&self) -> ConnectionSet {
+        self.green.clone().into()
+    }
+    pub fn purple_owned(&self) -> ConnectionSet {
+        self.purple.clone().into()
+    }
 }
 impl ConnectionPuzzle {
+    pub fn yellow(&self) -> &ConnectionSet {
+        &self.yellow
+    }
+
+    pub fn blue(&self) -> &ConnectionSet {
+        &self.blue
+    }
+    pub fn green(&self) -> &ConnectionSet {
+        &self.green
+    }
+    pub fn purple(&self) -> &ConnectionSet {
+        &self.purple
+    }
+
+    fn debug() -> Self {
+        let yellow = YellowSet(ConnectionSet::new("Yellow", ["y"; 4]));
+        let blue = BlueSet(ConnectionSet::new("Blue", ["b"; 4]));
+        let purple = PurpleSet(ConnectionSet::new("Purple", ["p"; 4]));
+        let green = GreenSet(ConnectionSet::new("Green", ["g"; 4]));
+        Self {
+            yellow,
+            blue,
+            purple,
+            green,
+        }
+    }
+
     pub const fn empty() -> Self {
         let yellow = YellowSet(ConnectionSet::empty_set());
         let blue = BlueSet(ConnectionSet::empty_set());
@@ -258,20 +330,6 @@ impl ConnectionPuzzle {
             Color::Purple => &self.purple,
             Color::Yellow => &self.yellow,
         }
-    }
-
-    pub fn yellow(&self) -> &ConnectionSet {
-        &self.yellow
-    }
-
-    pub fn blue(&self) -> &ConnectionSet {
-        &self.blue
-    }
-    pub fn green(&self) -> &ConnectionSet {
-        &self.green
-    }
-    pub fn purple(&self) -> &ConnectionSet {
-        &self.purple
     }
 }
 

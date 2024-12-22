@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 
-<html hidden>
+<html >
   <head>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@100..900&display=swap" as="style">
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
 
 
@@ -11,11 +12,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@100..900&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="index.css">
-    <script type="module" src="index.js"></script>
     <link rel="prefetch" as="document" href="./game.html" />
 
     <link rel="modulepreload" href="./pkg/nyt_connections.js" />
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+    <script type="module" src="index.js" defer></script>
     <title> Connections Generator</title>
   </head>
   <header>
@@ -78,7 +80,7 @@
     <div class="Buttons">
       <button type="button" disabled id="try_game" target="_blank">Try Game </button>
       <button type="button" id="submit"> Generate Game!</button>
-      <button type="button" disabled class="button hidden" id="copy_link" target="_blank">
+      <button type="button" disabled class="button" id="copy_link" target="_blank">
         <p>Copy Game Link </p>
 
         <dialog class="pop-up" id="copier">Copied to clipboard!</dialog>
@@ -90,11 +92,12 @@
 
   </div>
 
+
+
   <template id = "connections-game">
     <div class="container" >  
       <div class="game" >  
         <p> Match pairs of four!</p>
-        <board></board>
         <div class="board" id="board">
 
 
@@ -148,6 +151,8 @@
           <button type="button" disabled = "" id="deselect"> Deselect All</button>
           <button type="button" disabled = "" id="submit"> Submit</button>
         </div>
+        <br>
+          <button type="button" class="hidden" disabled = "" id="back"> Back to Results Screen</button>
 
 
 
@@ -163,14 +168,19 @@
         <div class="end-state" id="lose">Better luck next time!</div>
       </header>
       <div class="Buttons end">
-        <div class="end button enabled" id="again">Play Again</div>
-        <div class="end button" id="see-board">View Board</div>
+
+        <button type="button" class="end" id="again"> Play Again </button> 
+        <button type="button" class="end" id="see-board"> View Board </button> 
         <div>
-          <div class="end button enabled" id="share">Copy Link</div>
-          <dialog class="pop-up" id="copied">Copied to clipboard!</dialog>
+
+          <button type="button" class="end" id="share"> Copy Link </button> 
+          <dialog class="pop-up" class="end" id="copied">Copied to clipboard!</dialog>
         </div>
-        <div class="end button enabled" id="edit-me">Edit This Puzzle</div>
-        <div class="end button enabled" id="new-puzzle">Make another Puzzle</div>
+
+          <button type="button" class="end" id="edit-me"> Edit This Puzzle </button> 
+
+          <button type="button" class="end" id="new-puzzle"> Make another Puzzle</button> 
+
       </div>
     </dialog>
 
@@ -180,6 +190,5 @@
         </br>
         <slot name="words">default text</slot>
   </template>
-
 
 </html>

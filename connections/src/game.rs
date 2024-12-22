@@ -49,9 +49,9 @@ impl GameState {
 
     fn swap_on_success(&mut self) {}
 
-    pub fn check_selection(&mut self) -> Result<JsSelectionSuccess, GameFailiure> {
-        use GameFailiure::*;
-        use SelectionSuccess::*;
+    pub fn check_selection(&mut self) -> Result<JsSelectionSuccess, Failiure> {
+        use Failiure::*;
+        use SelectionSuccess::{Matched, Won};
 
         if self.prev_attempts.contains(&self.board.selection) {
             return Err(AlreadyTried);
@@ -137,11 +137,19 @@ impl GameState {
         //self.dom.reset();
     }
 
+    pub fn matched_text(&self, color: &str) -> Box<[String]> {
+        let Ok(color) = color.try_into() else {
+            panic!("Error, {color} is not a valid color string");
+        };
+        let (theme, words) = self.board.matched_set_text(color);
+        Box::new([theme.into(), words])
+    }
+
     pub fn connection_set(&self, color: Color) -> ConnectionSet {
         self.board.set(color).clone()
     }
 
-    pub fn clipboard_copied(&self) {
+    pub fn clipboard_copied() {
         console_log!("copied to clipboard");
     }
 
@@ -218,7 +226,7 @@ impl From<SelectionSuccess> for JsSelectionSuccess {
 }
 
 #[wasm_bindgen]
-pub enum GameFailiure {
+pub enum Failiure {
     Mismatch,
     NotEnough,
     OneAway,
@@ -226,7 +234,7 @@ pub enum GameFailiure {
     AlreadyTried,
 }
 
-impl From<SelectionFailiure> for GameFailiure {
+impl From<SelectionFailiure> for Failiure {
     fn from(failiure: SelectionFailiure) -> Self {
         match failiure {
             SelectionFailiure::Mismatch => Self::Mismatch,

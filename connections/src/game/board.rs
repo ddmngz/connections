@@ -320,16 +320,15 @@ impl Selection {
                 self.remove(index);
                 Ok(SelectState::Normal)
             }
-            None => match self.push(card) {
-                Some(_) => {
+            None => {
+                if self.push(card).is_some() {
                     console::log_1(&"not found, adding".into());
                     Ok(SelectState::Selected)
-                }
-                None => {
+                } else {
                     console::log_1(&"Selection Full".into());
                     Err(SelectionFailiure::NotEnough)
                 }
-            },
+            }
         }
     }
 

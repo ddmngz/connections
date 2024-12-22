@@ -1,4 +1,4 @@
-import init, {GameState, GameFailiure, JsSelectionSuccess, CardState, SelectionSuccessTags} from './pkg/nyt_connections.js';
+import init, {GameState, Failiure, JsSelectionSuccess, CardState, SelectionSuccessTags} from './pkg/nyt_connections.js';
 import {Button} from './index.js';
 
 let elems = null;
@@ -29,17 +29,16 @@ function init_elems(puzzle){
     elems = {
         game:game,
         board:new Board(),
-        endscreen:document.getElementById("end-screen"),
         shuffle: new Button("shuffle", shuffle),
         deselect: new Button("deselect", deselect),
         submit: new Button("submit", submit),
         remaining: new RemainingTries(),
         one_away: document.getElementById("away"),
         already_guessed: document.getElementById("already"),
-        end_screen: new EndScreen(),
-        matches:0
+        end_screen: end_screen(),
     };
     elems.selection = new Selection(elems.board);
+    elems.shuffle.enable();
 }
 
 function render_card(card){
@@ -55,32 +54,29 @@ class Board{
     }
 
     async move_selection(){
-        const source_indices = Array.from(elems.selection.all).map((card) => (card.index));
-        const dest_indices = Array.from(this.cards_list).slice(this.start_offset, this.rowEnd).map((card) => (card.index));
+        const selection_indices = Array.from(elems.selection.all).map((card) => (card.index));
+        const top_row_indices = Array.from(this.cards_list).slice(0, 4).map((card) => (card.index));
 
-        const cards_i = source_indices.map((card, index) => {
-            return ({source:card, dest:dest_indices[index]});
+        const cards_i = selection_indices.map((card, index) => {
+            return ({selection:card, top:top_row_indices[index]});
         });
+        
 
-        console.log(cards_i);
-
-        const cards = cards_i.map(({source, dest}) => {
-            return ({source:this.at(source), dest:this.at(dest)});
+        const cards = cards_i.map(({selection, top}) => {
+            return ({selection:this.at(selection), top:this.at(top)});
         })
 
-        console.log(cards);
 
-        cards.forEach(({source, dest}) => {
-            source.disabled = true;
-            dest.disabled = true;
+        cards.forEach(({selection, top}) => {
+            selection.disabled = true;
+            top.disabled = true;
         });
 
-        console.log(cards_i);
         
-        for(const {source, dest} of cards_i.slice(0,3)){
+        for(const {selection, top} of cards_i.slice(0,3)){
             this.update();
-            const s = this.at(source); 
-            const d = this.at(dest); 
+            const s = this.at(selection); 
+            const d = this.at(top); 
 
             this.swap_move(s,d);
             if(s.index >= this.rowEnd){
@@ -88,9 +84,9 @@ class Board{
             }
         }
         this.update();
-        const s = this.at(cards_i[3].source); 
-        const d = this.at(cards_i[3].dest); 
-        await this.swap_move(s,d);
+        const s = this.at(cards_i[3].selection); 
+        const t = this.at(cards_i[3].top); 
+        await this.swap_move(s,t);
         if(s.index >= this.rowEnd){
             s.disabled = false;
         }
@@ -115,11 +111,9 @@ class Board{
     }
 
     add_set(set){
-        console.log("add_set");
         const last = this.cards_list[3];
         const slice = Array.from(this.cards_list).slice(0,3);
         for(const card of slice){
-            console.log("removing ", card);
             card.remove();
         }
         last.replaceWith(set);
@@ -132,12 +126,12 @@ class Board{
         const two_to_one = [c2pos.x - c1pos.x, c2pos.y - c1pos.y];
         const one_to_two = [c1pos.x - c2pos.x, c1pos.y - c2pos.y];
         const to_2 = [
-            {transform: "translate(0,0)"},
-            {transform: `translate(${one_to_two[0]}px,${one_to_two[1]}px)`}
+            {transform: "translate(0,0)", easing:"ease-in"},
+            {transform: `translate(${one_to_two[0]}px,${one_to_two[1]}px)`, easing:"ease-out"}
         ];
         const to_1 = [
-            {transform: "translate(0,0)"},
-            {transform: `translate(${two_to_one[0]}px,${two_to_one[1]}px)`}
+            {transform: "translate(0,0)", easing:"ease-in"},
+            {transform: `translate(${two_to_one[0]}px,${two_to_one[1]}px)`, easing:"ease-out"}
         ];
         const promises = [card_1.animate(to_1,250).finished,card_2.animate(to_2,250).finished];
         await Promise.all(promises);
@@ -159,16 +153,40 @@ class Board{
         return(one);
     }
 
-    show(){
-        this.forEach((card) => {card.from_blank()});
+    async show(){
+        await new Promise(r => setTimeout(r, 250));
+        this.forEach((card) => {card.full_render(); card.shuffling = false});
+        await new Promise(r => setTimeout(r, 250));
+        this.forEach((card) => {card.disabled = false});
     }
 
     hide(){
-        this.forEach((card) => {card.to_blank()});
+        this.forEach((card) => {
+            card.disabled = true;
+            card.shuffling = true;
+        });
     }
 
     update_text(){
         this.forEach((card) => {card.render_text()});
+    }
+
+    reset(){ 
+        let new_cards = [new_card(0), new_card(1), new_card(2), new_card(3), 
+            new_card(4), new_card(5), new_card(6), new_card(7), new_card(8),
+            new_card(9), new_card(10), new_card(11), new_card(12), new_card(13),
+            new_card(14), new_card(15)]
+        this.board.replaceChildren(...new_cards);
+        this.update();
+        this.update_text();
+        elems.selection.update();
+        this.start_offset = 0;
+    }
+
+    disable(){
+	    this.forEach((card) => {
+		    card.disable;
+	    });
     }
 }
 
@@ -223,17 +241,24 @@ class Selection{
     get len(){
         return this.arr.length
     }
+
+    deselect(){
+        this.update();
+        this.arr.forEach((card) => {card.selected = false});
+        this.update();
+    }
 }
 
-function shuffle(){
+async function shuffle(){
     elems.board.hide();
     elems.game.shuffle();
     elems.board.show();
 
 }
 function deselect(){
+    elems.deselect.disable();
     elems.game.clear_selection();
-    elems.board.forEach((card) => {card.toggleAttribute("selected")});
+    elems.selection.deselect();
 }
 
 async function submit(){
@@ -241,28 +266,36 @@ async function submit(){
     try{
         await check_selection();
     }catch (e){
-        if(e == GameFailiure.AlreadyTried){
+        if(e == Failiure.AlreadyTried){
             pop_up(elems.already_guessed);
             return;
         }
         elems.remaining.lose_one();
         switch(e){
-            case GameFailiure.Mismatch:
+            case Failiure.Mismatch:
                 await elems.selection.shake();
                 break;
-            case GameFailiure.OneAway:
+            case Failiure.OneAway:
                 pop_up(elems.one_away);
                 break;
-            case GameFailiure.Lost:
+            case Failiure.Lost:
                 lost();
                 break;
         }
     }
 }
 
-function pop_up(modal){
-    const animation = {}
-    modal.animate(animation);
+async function pop_up(modal){
+
+    const animation = [
+        {display:"none", opacity:0, easing:"ease-out"},
+        {offset:.25, display:"block", opacity:1, easing:"ease-in"},
+        {offset:.75, display:"block", opacity:1, easing:"ease-in"},
+        {display:"none", opacity:0, easing:"ease-in"},
+    ];
+    modal.show();
+    await modal.animate(animation, 2500).finished;
+    modal.close();
 }
 
 async function check_selection(){
@@ -270,26 +303,30 @@ async function check_selection(){
 
     await update_match(success.color);
 
-    if (success.result = SelectionSuccessTags.Won){
+    if (success.result == SelectionSuccessTags.Won){
         win();
     }
 }
 
 async function update_match(color){
-    await elems.board.move_selection(elems.matches);
+    await elems.board.move_selection();
     const new_set = new ConnectionSet();
-    new_set.theme_color = color;
     elems.board.update();
     elems.board.add_set(new_set);
+    new_set.update_color(color);
+
+    elems.board.update();
 }
 
 
 
 
 function win(){
+    show_end_screen(elems.end_screen,true);
 }
 
 function lost(){
+    show_end_screen(elems.end_screen,false);
 }
 
 function update_buttons(){
@@ -317,6 +354,13 @@ function update_deselect(len){
         elems.deselect.disable();
     }
 }
+
+function new_card(i){
+    const elem = document.createElement("connections-card");
+    elem.setAttribute("i", i);
+    return(elem);
+}
+
 
 class Card extends HTMLElement{
     static observedAttributes = ["disabled"];
@@ -355,18 +399,6 @@ class Card extends HTMLElement{
         }
     }
 
-    set moving(flag){
-        if (flag) {
-            this._internals.states.add("moving");
-        } else {
-            this._internals.states.delete("moving");
-        }
-    }
-
-    get moving(){
-        return this._internals.states.has("moving");
-    }
-
     get row(){
         return(Math.floor( this.index / 4) + 1);
     }
@@ -397,6 +429,12 @@ class Card extends HTMLElement{
     }
 
     on_click(){
+        if(this.selected || elems.selection.len < 4){
+            this.toggle_select();
+        }
+    }
+
+    toggle_select(){
         this.selected = !this.selected;
         elems.game.select(this.index);
         update_buttons();
@@ -407,18 +445,27 @@ class Card extends HTMLElement{
         this.textContent = card.word;
         if(card.state == CardState.Selected){
             this.selected = true;
+        }else{
+            this.selected = false;
         }
     }
 
-    to_blank(){
-        this.textContent = "";
-        this._internals.states.delete("selected");
-        this.disabled = "";
+    render_text(){
+        this.textContent = elems.game.card_text(this.index);
     }
 
-    from_blank(){
-        this.disabled = null;
-        this.full_render();
+    
+
+    get shuffling(){
+        this._internals.states.has("shuffling");
+    }
+
+    set shuffling(flag){
+        if (flag) {
+            this._internals.states.add("shuffling");
+        } else {
+            this._internals.states.delete("shuffling");
+        }
     }
 }
 
@@ -436,67 +483,192 @@ class RemainingTries{
     }
 
     reset(){
-        const arr = Array.from(handle);
+        const arr = Array.from(this.handle);
         arr.forEach((span) => span.classList.remove('hidden'));
     }
 }
 
 
-class EndScreen{}
+
+
+function show_end_screen(e, won){
+    end_buttons(e).forEach((button) => {button.enable()});
+    if(won){
+        e.win.classList.add("enabled")
+    }else{
+        e.lose.classList.add("enabled")
+    }
+    e.modal.showModal();
+}
+
+function end_screen(){
+
+    const end_screen_elems = {
+        modal : document.getElementById("endscreen"),
+        win : document.getElementById("win"),
+        lose : document.getElementById("lose"),
+        again : new Button("again", play_again),
+        view_board : new Button("see-board", view_board),
+        share : new Button("share", share),
+        copied : document.getElementById("copied"),
+        edit : new Button("edit-me", edit),
+        new : new Button("new-puzzle", new_puzzle),
+        back : new Button("back", back_to_endscreen),
+    }
+
+
+	function back_to_endscreen(){
+		end_screen_elems.back.div.classList.add("hidden");
+        	end_screen_elems.modal.showModal();
+		end_screen_elems.back.disable();
+	}
+
+	function play_again(){
+		reset_elems();
+
+		end_buttons(end_screen_elems).forEach((button) => button.disable());
+		end_screen_elems.win.classList.remove("enabled");
+		end_screen_elems.lose.classList.remove("enabled");
+		end_screen_elems.modal.close();
+	}
+
+	function reset_elems(){
+		elems.game.start_over();
+		elems.remaining.reset();
+		elems.selection.update();
+		elems.board.reset();
+		elems.deselect.disable();
+		elems.shuffle.enable();
+		elems.submit.disable();
+	}
+
+	function view_board(){
+		end_screen_elems.back.enable();
+		end_screen_elems.back.div.classList.remove("hidden");
+        	end_screen_elems.modal.close();
+		elems.board.disable();
+		elems.shuffle.disable();
+		elems.deselect.disable();
+		elems.submit.disable();
+		// show the back button
+		// disable all the buttons except the back button
+	}
+
+	async function share(){
+		const code = elems.game.puzzle_code();
+		const url = new URL(document.URL);
+		url.searchParams.delete("edit");
+		url.searchParams.set("game", code);
+		await navigator.clipboard.writeText(url.href);
+		await copied_link();
+
+		/*
+			const url = new URL("game.html",Dom.url);
+		url.searchParams.set("game", Dom.puzzle.encode());
+		// Copy the text inside the text field
+		await navigator.clipboard.writeText(url.href);
+		await copied_link(Dom);
+		*/
+			// copy link to clipboard
+		// animte "copied link"
+	}
+
+	async function copied_link(){
+
+		end_screen_elems.share.div.textContent = 'Copied!';
+
+		await new Promise(r => setTimeout(r, 750));
+
+		end_screen_elems.share.div.textContent = "Copy To Clipboard";
+
+	}
+
+	function edit(){
+		const code = elems.game.puzzle_code();
+		const url = new URL(document.URL);
+		url.searchParams.set("edit", code);
+		url.searchParams.delete("game");
+		window.location.replace(url.href);
+	}
+
+	function new_puzzle(){
+		const url = new URL(document.URL);
+		url.searchParams.delete("edit");
+		url.searchParams.delete("game");
+		window.location.replace(url.href);
+	}
+
+	return(end_screen_elems);
+}
+
+function end_buttons(e){
+	return([e.again, e.view_board, e.share, e.edit, e.new]);
+}
+
+
 
 
 export class ConnectionSet extends HTMLElement{
-    constructor(){
-        super();
-        this._internals = this.attachInternals();
-    }
+	static observedAttributes = ["connections-color"];
+	constructor(){
+		super();
+		this._internals = this.attachInternals();
+	}
 
-    connectedCallback(){
-        const template = document.getElementById(
-            "connections-set",
-        );
-        let templateContent = template.content;
+	connectedCallback(){
+		const template = document.getElementById(
+			"connections-set",
+		);
+		let templateContent = template.content;
 
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(templateContent.cloneNode(true));
-    }
+		const shadowRoot = this.attachShadow({ mode: "open" });
+		shadowRoot.appendChild(templateContent.cloneNode(true));
+	}
 
-    get blue() {
-        return this._internals.states.has("blue");
-    }
+	attributeChangedCallback(name, _oldValue, newValue) {
+		if (name != "connections-color"){
+			return;
+		}
+		const words_n_theme = elems.game.matched_text(newValue);
+		this.theme = words_n_theme[0];
+		this.words =  words_n_theme[1];
+	}
 
+	update_color(color) {
+		if (color) {
+			this.setAttribute("connections-color", color);
+		} else {
+			this.removeAttribute("connections-color");
+		}
+	}
 
+	get words(){
+	}
 
-    set blue(flag) {
-        if (flag) {
-            this._internals.states.add("blue");
-        } else {
-            this._internals.states.delete("blue");
-        }
-    }
+	set words(content){
 
-    get yellow() {
-        return this._internals.states.has("yellow");
-    }
+		let slots = this.shadowRoot.querySelectorAll("slot");
+		for (const slot of slots) {
+			if(slot.name == "words"){
+				slot.textContent= content;
+				return
+			}
+		}
+		throw new Error("couldn't find slot")
+	}
 
-    get purple() {
-        return this._internals.states.has("purple");
-    }
+	get theme(){
+	}
 
-    get green() {
-        return this._internals.states.has("green");
-    }
+	set theme(content){
+		let slots = this.shadowRoot.querySelectorAll("slot");
+		for (const slot of slots) {
+			if(slot.name == "theme"){
+				slot.textContent= content;
+				return;
+			}
+		}
+		throw new Error("couldn't find slot")
+	}
 
-
-    get theme_color() {
-        return this._internals.states.get("theme_color");
-    }
-
-    set theme_color(color) {
-        if (color) {
-            this._internals.states.add(color);
-        } else {
-            this._internals.states.delete(color);
-        }
-    }
 }

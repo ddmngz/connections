@@ -11,8 +11,7 @@ async function load_asm(){
 
     const wasm = await fetch(url, FetchOptions);
     const module = await WebAssembly.compileStreaming(wasm);
-
-    await init(module);
+    await init({module_or_path:module});
 }
 
 const color = {
@@ -46,10 +45,12 @@ class InputSet{
     }
 
     set_text(connection_set){
-        this.theme.textContent = connection_set.theme();
-        const words = connection_set.words();
+        this.theme.value = connection_set.theme();
+
+        const words = connection_set.words_list();
+        //const words = connection_set.words_list();
         this.words.forEach((word, index) => {
-            word.textContent = words[index];
+            word.value = words[index];
         });
     }
 
@@ -75,13 +76,10 @@ class InputSet{
     }
 
     args(){
-        console.log(this.theme.value);
         const words = this.words.map((div) => {
-            console.log(div);
             return (div.value);
         });
         const list = [this.theme.value].concat(words)
-        console.log(list);
         return(list);
     }
 
@@ -96,10 +94,10 @@ class Inputs{
     }
 
     set_text(connection_puzzle){
-        this.yellow.set_text(connection_puzzle.purple());
-        this.green.set_text(connection_puzzle.green());
-        this.purple.set_text(connection_puzzle.purple());
-        this.blue.set_text(connection_puzzle.blue());
+        this.yellow.set_text(connection_puzzle.yellow_owned());
+        this.green.set_text(connection_puzzle.green_owned());
+        this.purple.set_text(connection_puzzle.purple_owned());
+        this.blue.set_text(connection_puzzle.blue_owned());
     }
 
     set_callbacks(){
@@ -117,13 +115,15 @@ class Inputs{
 
 }
 
-function get_code(){
-    console.log(Dom.url);
+function game_code(){
     return Dom.url.searchParams.get("game");
 }
 
+function edit_code(){
+    return Dom.url.searchParams.get("edit");
+}
+
 function is_full(){
-    console.log(Dom.inputs_filled)
     for (var i = 0; i < Dom.inputs_filled.length; i++) { 
         if(Dom.inputs_filled[i] == false){
             return false;
@@ -143,11 +143,22 @@ function check_full(){
 
 
 function start_editor(){
-    const code = get_code();
-    if(code != null){
-        const puzzle = ConnectionPuzzle.decode(code);
-        Dom.inputs.set_text(puzzle);
+    const game = game_code();
+    const edit = edit_code();
+
+
+    if (game != null){
+        const puzzle = ConnectionPuzzle.decode(game);
+        start_game(Dom.game_div, puzzle);
+        return;
     }
+    
+
+    if(edit != null){
+        const puzzle = ConnectionPuzzle.decode(edit);
+        Dom.inputs.set_text(puzzle);
+    } 
+
     try{
         set_callbacks();
     }catch (e){
@@ -230,7 +241,6 @@ async function copy_link(){
 async function copied_link(){
     Dom.copied_message.show();
     const keyframes = [{opacity:0, easing:"ease-out"},{opacity:1, easing:"ease-in"},{opacity:0 }]
-    console.log(keyframes);
     await Dom.copied_message.animate(keyframes, 2000).finished;
     Dom.copied_message.close();
 }
@@ -266,4 +276,6 @@ async function main(){
 
     start_editor();
 }
+
+
 

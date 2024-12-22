@@ -20,15 +20,28 @@ impl AsRef<str> for Color {
     }
 }
 
-impl Into<js_sys::JsString> for Color {
-    fn into(self) -> js_sys::JsString {
-        match self {
-            Self::Yellow => "yellow",
-            Self::Blue => "blue",
-            Self::Purple => "purple",
-            Self::Green => "green",
+impl TryFrom<&str> for Color {
+    type Error = ();
+
+    fn try_from(string: &str) -> Result<Self, ()> {
+        match string {
+            "yellow" => Ok(Self::Yellow),
+            "blue" => Ok(Self::Blue),
+            "green" => Ok(Self::Green),
+            "purple" => Ok(Self::Purple),
+            _ => Err(()),
         }
-        .into()
+    }
+}
+
+impl From<Color> for js_sys::JsString {
+    fn from(val: Color) -> Self {
+        match val {
+            Color::Yellow => "yellow".into(),
+            Color::Blue => "blue".into(),
+            Color::Purple => "purple".into(),
+            Color::Green => "green".into(),
+        }
     }
 }
 

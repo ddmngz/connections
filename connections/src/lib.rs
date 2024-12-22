@@ -3,7 +3,8 @@ use wasm_bindgen::prelude::*;
 
 //use web_sys::console;
 
-fn start() {
+#[wasm_bindgen(main)]
+fn main() {
     console_error_panic_hook::set_once();
 }
 
