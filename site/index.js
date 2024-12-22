@@ -148,15 +148,21 @@ function start_editor(){
 
 
     if (game != null){
-        const puzzle = ConnectionPuzzle.decode(game);
-        start_game(Dom.game_div, puzzle);
-        return;
+        try{
+            const puzzle = ConnectionPuzzle.decode(game);
+            start_game(Dom.game_div, puzzle);
+            return;
+        }catch{
+        }
     }
     
 
     if(edit != null){
-        const puzzle = ConnectionPuzzle.decode(edit);
-        Dom.inputs.set_text(puzzle);
+        try{
+            const puzzle = ConnectionPuzzle.decode(edit);
+            Dom.inputs.set_text(puzzle);
+        }catch{
+        }
     } 
 
     try{
