@@ -199,6 +199,8 @@ impl ConnectionPuzzle {
     pub fn decode(code: &str) -> Result<Self, TranscodingError> {
         if code == "debug" {
             return Ok(Self::debug());
+        } else if code == "default" {
+            return Ok(Self::default());
         }
         let compressed_bytes = URL_SAFE
             .decode(code)
