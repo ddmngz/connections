@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 
-<html hidden>
+<html >
   <head>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@100..900&display=swap" as="style">
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
-    
+
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,80 +12,183 @@
     <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@100..900&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="index.css">
-    <script type="module" src="index.js"></script>
     <link rel="prefetch" as="document" href="./game.html" />
 
     <link rel="modulepreload" href="./pkg/nyt_connections.js" />
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+    <script type="module" src="index.js" defer></script>
     <title> Connections Generator</title>
   </head>
   <header>
-      <h1>Connections Generator</h1>
-      <p> Make your game, then start playing!</p>
+    <h1>Connections Generator</h1>
+    <p> Make your game, then start playing!</p>
 
   </header>
-  <body>
 
-<div class="game" >  
-  <div class="board" id="board">
+  <div class="game" id="game" >  
+    <div class="board" id="board">
       <div class="matched-set " id="blue"> 
-          <input type="text" placeholder="theme" class="theme">
+        <input type="text" placeholder="theme" class="theme">
 
-          <br>
-          <div class="word-set" > 
-            <input type="text" maxlength=30 placeholder="word">
-            <input type="text" maxlength=30 placeholder="word">
-            <input type="text" maxlength=30 placeholder="word">
-            <input type="text" maxlength=30 placeholder="word">
-          </div>
-      </div>
-      <div class="matched-set" id="yellow"> 
-          <input type="text" placeholder="theme" class="theme">
-
-          <br>
-          <div class="word-set" > 
-            <input type="text" maxlength=30 placeholder="word">
-            <input type="text" maxlength=30 placeholder="word">
-            <input type="text" maxlength=30 placeholder="word">
-            <input type="text" maxlength=30 placeholder="word">
-
-            </div>
-
-      </div>
-      <div class="matched-set" id="green"> 
-          <input type="text" placeholder="theme" class="theme">
-
-          <br>
-          <div class="word-set" > 
-            <input type="text" maxlength=30 placeholder="word">
-            <input type="text" maxlength=30 placeholder="word">
-            <input type="text" maxlength=30 placeholder="word">
-            <input type="text" maxlength=30 placeholder="word">
+        <br>
+        <div class="word-set" > 
+          <input type="text" maxlength=30 placeholder="word">
+          <input type="text" maxlength=30 placeholder="word">
+          <input type="text" maxlength=30 placeholder="word">
+          <input type="text" maxlength=30 placeholder="word">
         </div>
       </div>
-      <div class="matched-set" id="purple"> 
+    <div class="matched-set" id="yellow"> 
+      <input type="text" placeholder="theme" class="theme">
 
-          <input type="text" placeholder="theme" class="theme">
-
-          <br>
-          <div class="word-set" > 
-            <input type="text" maxlength=30 placeholder="word">
-            <input type="text" maxlength=30 placeholder="word">
-            <input type="text" maxlength=30 placeholder="word">
-            <input type="text" maxlength=30 placeholder="word">
-        </div>
+      <br>
+      <div class="word-set" > 
+        <input type="text" maxlength=30 placeholder="word">
+        <input type="text" maxlength=30 placeholder="word">
+        <input type="text" maxlength=30 placeholder="word">
+        <input type="text" maxlength=30 placeholder="word">
 
       </div>
-  </div> 
-  <div class="Buttons">
-  <a class="hidden_button" id="go_to_game" target="_blank">Play Game </a>
-  <div class="button" id="submit"> Generate Game!</div>
-  <a class="hidden_button" id="copy_link" target="_blank">Copy Game Link </a>
+
+    </div>
+    <div class="matched-set" id="green"> 
+      <input type="text" placeholder="theme" class="theme">
+
+      <br>
+      <div class="word-set" > 
+        <input type="text" maxlength=30 placeholder="word">
+        <input type="text" maxlength=30 placeholder="word">
+        <input type="text" maxlength=30 placeholder="word">
+        <input type="text" maxlength=30 placeholder="word">
+      </div>
+    </div>
+    <div class="matched-set" id="purple"> 
+
+      <input type="text" placeholder="theme" class="theme">
+
+      <br>
+      <div class="word-set" > 
+        <input type="text" maxlength=30 placeholder="word">
+        <input type="text" maxlength=30 placeholder="word">
+        <input type="text" maxlength=30 placeholder="word">
+        <input type="text" maxlength=30 placeholder="word">
+      </div>
+
+    </div>
+    </div> 
+    <div class="Buttons">
+      <button type="button" disabled id="try_game" target="_blank">Try Game </button>
+      <button type="button" id="submit"> Generate Game!</button>
+      <button type="button" disabled class="button" id="copy_link" target="_blank">
+        <p>Copy Game Link </p>
+
+        <dialog class="pop-up" id="copier">Copied to clipboard!</dialog>
+      </button>
+
+    </div>
+    <button type="button" class="button hidden" id="random_game" target="_blank">Play a Random Game</button>
+
+
   </div>
 
-  <a class="hidden_button" id="random_game" target="_blank">Play a Random Game</a>
 
-  <dialog class="pop-up" id="copier">Copied to clipboard!</dialog>
-  </body>
+
+  <template id = "connections-game">
+    <div class="container" >  
+      <div class="game" >  
+        <p> Match pairs of four!</p>
+        <div class="board" id="board">
+
+
+          <connections-card i=0> </connections-card>
+          <connections-card i=1> </connections-card>
+          <connections-card i=2> </connections-card>
+
+          <connections-card i=3> </connections-card>
+
+          <connections-card i=4> </connections-card>
+
+
+          <connections-card i=5> </connections-card>
+
+          <connections-card i=6> </connections-card>
+
+          <connections-card i=7> </connections-card>
+
+          <connections-card i=8> </connections-card>
+
+
+	  <connections-card i=9> </connections-card>
+
+          <connections-card i=10> </connections-card>
+
+          <connections-card i=11> </connections-card>
+
+          <connections-card i=12> </connections-card>
+
+
+          <connections-card i=13> </connections-card>
+
+          <connections-card i=14> </connections-card>
+
+          <connections-card i=15> </connections-card>
+
+
+
+        </div> 
+
+        <div class="remaining_tries"> 
+          Mistakes remaining:
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span> 
+        </div>
+
+        <div class="Buttons"> 
+          <button type="button" id="shuffle"> Shuffle </button> 
+          <button type="button" disabled = "" id="deselect"> Deselect All</button>
+          <button type="button" disabled = "" id="submit"> Submit</button>
+        </div>
+        <br>
+          <button type="button" class="hidden" disabled = "" id="back"> Back to Results Screen</button>
+
+
+
+        <dialog class="pop-up" id="away">One Away...</dialog>
+        <dialog class="pop-up" id="already">Already Guessed!</dialog>
+
+        <br>
+      </div>
+    </div>
+    <dialog id="endscreen">
+      <header>
+        <div class="end-state" id="win">You Win!</div>
+        <div class="end-state" id="lose">Better luck next time!</div>
+      </header>
+      <div class="Buttons end">
+
+        <button type="button" class="end" id="again"> Play Again </button> 
+        <button type="button" class="end" id="see-board"> View Board </button> 
+        <div>
+
+          <button type="button" class="end" id="share"> Copy Link </button> 
+          <dialog class="pop-up" class="end" id="copied">Copied to clipboard!</dialog>
+        </div>
+
+          <button type="button" class="end" id="edit-me"> Edit This Puzzle </button> 
+
+          <button type="button" class="end" id="new-puzzle"> Make another Puzzle</button> 
+
+      </div>
+    </dialog>
+
+  </template>
+  <template id="connections-set"> 
+      <b><slot name="theme">default text</slot></b>
+        </br>
+        <slot name="words">default text</slot>
+  </template>
+
 </html>
-

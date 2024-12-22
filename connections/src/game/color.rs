@@ -1,14 +1,12 @@
-pub struct Yellow {}
-pub struct Blue {}
-pub struct Purple {}
-pub struct Green {}
-
+use wasm_bindgen::prelude::*;
+#[repr(u8)]
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[wasm_bindgen]
 pub enum Color {
-    Yellow,
-    Blue,
-    Purple,
-    Green,
+    Yellow = 0,
+    Blue = 1,
+    Purple = 2,
+    Green = 3,
 }
 
 impl AsRef<str> for Color {
@@ -18,6 +16,31 @@ impl AsRef<str> for Color {
             Self::Blue => "blue",
             Self::Purple => "purple",
             Self::Green => "green",
+        }
+    }
+}
+
+impl TryFrom<&str> for Color {
+    type Error = ();
+
+    fn try_from(string: &str) -> Result<Self, ()> {
+        match string {
+            "yellow" => Ok(Self::Yellow),
+            "blue" => Ok(Self::Blue),
+            "green" => Ok(Self::Green),
+            "purple" => Ok(Self::Purple),
+            _ => Err(()),
+        }
+    }
+}
+
+impl From<Color> for js_sys::JsString {
+    fn from(val: Color) -> Self {
+        match val {
+            Color::Yellow => "yellow".into(),
+            Color::Blue => "blue".into(),
+            Color::Purple => "purple".into(),
+            Color::Green => "green".into(),
         }
     }
 }
@@ -48,33 +71,5 @@ impl Color {
             3 => Color::Green,
             _ => unreachable!(),
         }
-    }
-}
-
-pub trait AsColor {
-    fn color() -> Color;
-}
-
-impl AsColor for Yellow {
-    fn color() -> Color {
-        Color::Yellow
-    }
-}
-
-impl AsColor for Blue {
-    fn color() -> Color {
-        Color::Blue
-    }
-}
-
-impl AsColor for Purple {
-    fn color() -> Color {
-        Color::Purple
-    }
-}
-
-impl AsColor for Green {
-    fn color() -> Color {
-        Color::Green
     }
 }

@@ -18,16 +18,13 @@ p{
     margin:auto;
     font-weight:normal;
 }
-
-
-
 .game{
     display:flex;
     flex-direction: column;
     justify-content:space-evenly;
-    z-index: -0; /* Specify a stack order in case you're using a different order for other elements */
-    margin: auto;
+    margin:auto;
     height:70vh;
+    width: 70vh;
 }
 
 .board_container{
@@ -41,12 +38,9 @@ p{
 
     top: 25%;
     bottom:50%;
-    margin: auto;
   z-index: -0; /* Specify a stack order in case you're using a different order for other elements */
 
 }
-
-
 
 .board {
   display: grid;
@@ -55,10 +49,8 @@ p{
   height: calc(3 * 8px + 4 * 80px);
   background-color: #FFFFFF;
   gap:8px;
-  width: calc(3 * 8px + 4 * 150px);
   min-height: 0;
   min-width: 0;
-  margin:auto;
   position:relative;
   /*left: 400px;*/
   /*position:;*/
@@ -80,7 +72,6 @@ input[type=text].theme{
     display:flex;
     flex-grow:0;
     flex-shrink:1;
-    justify:center;
 }
 
 input[type=text]{
@@ -95,10 +86,7 @@ input[type=text]{
     display:inline;
 }
 
-.matched-set.blue {
-    display:inline-block;
-    background-color: var(--connections-blue);
-}
+
 
 .word{
     display:inline;
@@ -120,6 +108,88 @@ input[type=text]{
   transition: background-color .25s, color .25s;
     height: 40px;
 }
+
+connections-set {
+  grid-column-end: span 4;
+  border-radius: 6px;
+  padding: 20px;
+  font-size: 20px;
+  font-weight: 400;
+  text-align: center;
+  cursor: default;
+  text-transform: uppercase;
+  font-family: "Libre Franklin", sans-serif;
+  font-style: normal; 
+  z-index: -1; /* Specify a stack order in case you're using a different order for other elements */
+  position:sticky;
+  transition: background-color .25s, color .25s;
+    height: 40px;
+}
+
+
+connections-set[connections-color = "yellow"]{
+    display:inline-block;
+    background-color: var(--connections-yellow);
+}
+
+
+connections-set[connections-color = "green"]{
+    display:inline-block;
+    background-color: var(--connections-green);
+}
+
+
+
+connections-set[connections-color = "purple"]{
+    display:inline-block;
+    background-color: var(--connections-maroon);
+}
+
+
+connections-set[connections-color = "blue"]{
+
+    display:inline-block;
+    background-color: var(--connections-blue);
+}
+
+
+
+
+
+
+connections-card{
+  height: 40px;
+  line-height:40px;
+  border-radius: 6px;
+  background-color: var(--connections-light-beige);
+  padding: 20px;
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-family: "Libre Franklin", sans-serif;
+  font-style: normal; 
+  z-index: -1; /* Specify a stack order in case you're using a different order for other elements */
+  position:sticky;
+  transition: background-color .25s, color .25s;
+}
+
+connections-card:state(selected){
+  background-color: var(--connections-darker-beige);
+  color:white;
+}
+
+connections-card:state(moving){
+  transition: none
+}
+
+
+connections-card:state(shuffling){
+    color: rgba(0,0,0,0);
+  transition: color .25s;
+}
+
 
 .card {
   height: 40px;
@@ -174,7 +244,6 @@ input[type=text]{
   border-radius: 6px;
   width: 35%;
   margin:auto;
-  align:center;
   text-align: center;
   font-weight: 600;
   font-size:16px;
@@ -191,7 +260,12 @@ input[type=text]{
   transition: background-color .25s, scale .25s
 }
 
- .deactivated-dot {
+button.hidden {
+    opacity:0;
+}
+
+
+ .dot.hidden {
   margin:auto;
   height: 15px;
   width: 15px;
@@ -204,7 +278,6 @@ input[type=text]{
 .cover{
   height: calc(3 * 8px + 80px);
   padding: 20px;
-  width: calc(3 * 8px + 4 * 150px);
   min-height: 0;
   min-width: 0;
   margin:auto;
@@ -213,53 +286,53 @@ input[type=text]{
   position: fixed
 }
 
-.button{
+button{
   cursor: pointer;
   font-size:15px;
   padding: 20px;
   border-radius: 60px;
   width: max-content;
-  margin:auto;
-  align:center;
+  margin:0 auto;
 
   text-align: center;
   font-weight: 500;
   border-style:solid;
   border-color:var(--connections-extra-dark-beige);
   border-width:thin;
-  transition: border-color ease .15s, color ease .15s
+  transition: border-color ease .15s, color ease .15s;
+  z-index:3;
+  position:relative;
+  background-color:white;
 }
 
-.button.hidden{
+button:disabled{
   cursor: default;
   border-color:var(--connections-dark-beige);
   color:var(--connections-dark-beige);
 }
 
-.hidden_button{
-  cursor: default;
-  font-size:15px;
-  padding:20px;
-  border-radius: 60px;
-  width: max-content;
-  margin:auto;
-  align:center;
-  cursor: default;
-
+.end{
+   width: max-content;
+  margin: 10px auto;
+  padding:10px 18px;
   text-align: center;
-  font-weight: 500;
-  border-style:solid;
-  border-color:var(--connections-dark-beige);
-  color:var(--connections-dark-beige);
-  border-width:thin;
+  background-color:white;
+  color:black;
+  font-size:medium;  
+  border-radius: 6px;
+  font-weight:600;
+  transition: display .25s, opacity .25s;
+  opacity:1
+
 }
+
 
 .Buttons{
   display: flex;
   position:relative;
   margin-top: 10px;
   flex-direction: row;
-  align-items:center;
+  align-items:flex-start;
   justify-content:center;
 }
 
@@ -282,7 +355,6 @@ input[type=text]{
   width: max-content;
   align-items: center;
   text-align: center;
-  min-height: 100;
   background-color:black;
   color:white;
   font-size:medium;  
@@ -321,7 +393,6 @@ input[type=text]{
     }
 
 .board {
-    width: 80vw;
   min-height: 0;
   min-width: 0;
   margin:auto;
@@ -333,13 +404,12 @@ input[type=text]{
   z-index: 1; /* Specify a stack order in case you're using a different order for other elements */
 }
 
-.button{
+button{
     padding:11px;
+    margin:0 auto;
 }
 
-.hidden_button{
-    padding:11px;
-}
+
 }
 
 
@@ -423,11 +493,10 @@ input[type=text]{
 
 
 #copier{
+    z-index:1;
     opacity:0;
     display:block;
-    position:fixed;
-    bottom: 0;
-    opacity:0;
+    position:absolute;
     transition: opacity .2s ease-out;
 }
 
@@ -446,6 +515,7 @@ input[type=text]{
   font-size:medium;  
   border-radius: 6px;
   font-weight:600;
+  border:none;
 }
 
 .pop-up.visible{
@@ -460,33 +530,31 @@ input[type=text]{
   font-size:medium;  
   border-radius: 6px;
   font-weight:600;
-  transition: opacity .25s ease-out;
   }
 
 
+  /*
 dialog[open]{
   animation: fade-in 0.4s ease-out;
 }
+*/
+
+#share{
+    position:relative;
+    z-index:2;
+}
 
 #copied{
+    padding:2px 5px;
+    font-size:10px;
+    z-index:0;
+    /*
     position: fixed;
     top: 0;
+    */
 }
 
-.end.button{
-   width: max-content;
-  margin: 10px auto;
-  padding:10px 18px;
-  text-align: center;
-  background-color:white;
-  color:black;
-  font-size:medium;  
-  border-radius: 6px;
-  font-weight:600;
-  transition: display .25s, opacity .25s;
-  opacity:1
 
-}
 
 .pop-up.enabled{
     display:block;

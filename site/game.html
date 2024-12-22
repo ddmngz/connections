@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html hidden>
   <head>
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
     <link rel="stylesheet" href="index.css">
@@ -11,72 +10,65 @@
     <script type="module" src="game.js"></script>
   </head>
   <body>
+    <div class="container" >  
+      <div class="game" >  
+        <p> Match pairs of four!</p>
+        <div class="board" id="board">
+          <div class="card"></div>
+          <div class="card"></div>
+          <div class="card"></div>
+          <div class="card"></div>
 
-<div class="container" >  
-<div class="game" >  
-    <p> Match pairs of four!</p>
-  <div class="board" id="board">
-        <div class="card"></div>
-        <div class="card"></div>
-        <div class="card"></div>
-        <div class="card"></div>
+          <div class="card"></div>
+          <div class="card"></div>
+          <div class="card"></div>
+          <div class="card"></div>
+          <div class="card"></div>
+          <div class="card"></div>
+          <div class="card" ></div>
+          <div class="card"></div>
+          <div class="card"></div>
+          <div class="card"></div>
+          <div class="card"></div>
+          <div class="card"></div>
+        </div> 
 
-      <div class="card"></div>
-      <div class="card"></div>
-      <div class="card"></div>
-      <div class="card"></div>
-      <div class="card"></div>
-      <div class="card"></div>
-      <div class="card" ></div>
-      <div class="card"></div>
-      <div class="card"></div>
-      <div class="card"></div>
-      <div class="card"></div>
-      <div class="card"></div>
-  </div> 
+        <div class="remaining_tries"> 
+          Mistakes remaining:
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span> 
+        </div>
 
-  <div class="remaining_tries"> 
-      Mistakes remaining:
-     <span class="dot"></span>
-     <span class="dot"></span>
-     <span class="dot"></span>
-     <span class="dot"></span> 
-  </div>
+        <div class="Buttons"> 
+          <div class="button", id="shuffle"> Shuffle </div> 
+          <div class="button hidden" id="deselect"> Deselect All</div>
+          <div class="button hidden" id="submit"> Submit</div>
+        </div>
 
-  <div class="Buttons"> 
-    <div class="button", id="shuffle"> Shuffle </div> 
-    <div class="button hidden" id="deselect"> Deselect All</div>
-    <div class="button hidden" id="submit"> Submit</div>
-  </div>
+        <dialog class="pop-up" id="away">One Away...</dialog>
+        <dialog class="pop-up" id="already">Already Guessed!</dialog>
 
-
-
-    <dialog class="pop-up" id="away">One Away...</dialog>
-
-    <dialog class="pop-up" id="already">Already Guessed!</dialog>
-
-  <br>
-  </div>
-  </div>
-  <dialog id="endscreen">
+        <br>
+      </div>
+    </div>
+    <dialog id="endscreen">
       <header>
         <div class="end-state" id="win">You Win!</div>
         <div class="end-state" id="lose">Better luck next time!</div>
       </header>
-        <div class="Buttons end">
-
-            <div class="end button enabled" id="again">Play Again</div>
-            <div class="end button" id="see-board">View Board</div>
-            <div class="end button enabled" id="share">Copy Link</div>
-            <div class="end button enabled" id="edit-me">Edit This Puzzle</div>
-            <div class="end button enabled" id="back">Make another Puzzle</div>
-
-            <dialog class="pop-up" id="copied">Copied to clipboard!</dialog>
-        </div>
+      <div class="Buttons end">
+        <div class="end button enabled" id="again">Play Again</div>
+        <div class="end button" id="see-board">View Board</div>
+        <div class="end button enabled" id="share">Copy Link</div>
+        <div class="end button enabled" id="edit-me">Edit This Puzzle</div>
+        <div class="end button enabled" id="new-puzzle">Make another Puzzle</div>
+        <dialog class="pop-up" id="copied">Copied to clipboard!</dialog>
+      </div>
     </dialog>
-
-  </div>
-
+    </div>
   </body>
+
 </html>
 
