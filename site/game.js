@@ -126,11 +126,11 @@ class Board{
         const two_to_one = [c2pos.x - c1pos.x, c2pos.y - c1pos.y];
         const one_to_two = [c1pos.x - c2pos.x, c1pos.y - c2pos.y];
         const to_2 = [
-            {transform: "translate(0,0)", easing:"ease-in"},
+            {transform: "translate(0,0)", easing:"ease-out"},
             {transform: `translate(${one_to_two[0]}px,${one_to_two[1]}px)`, easing:"ease-out"}
         ];
         const to_1 = [
-            {transform: "translate(0,0)", easing:"ease-in"},
+            {transform: "translate(0,0)", easing:"ease-out"},
             {transform: `translate(${two_to_one[0]}px,${two_to_one[1]}px)`, easing:"ease-out"}
         ];
         const promises = [card_1.animate(to_1,250).finished,card_2.animate(to_2,250).finished];
@@ -288,10 +288,10 @@ async function submit(){
 async function pop_up(modal){
 
     const animation = [
-        {display:"none", opacity:0, easing:"ease-out"},
+        {opacity:0, easing:"ease-out"},
         {offset:.25, display:"block", opacity:1, easing:"ease-in"},
         {offset:.75, display:"block", opacity:1, easing:"ease-in"},
-        {display:"none", opacity:0, easing:"ease-in"},
+        {opacity:0, easing:"ease-in"},
     ];
     modal.show();
     await modal.animate(animation, 2500).finished;
@@ -311,11 +311,13 @@ async function check_selection(){
 async function update_match(color){
     await elems.board.move_selection();
     const new_set = new ConnectionSet();
+    /*
     elems.board.update();
     elems.board.add_set(new_set);
     new_set.update_color(color);
 
     elems.board.update();
+    */
 }
 
 

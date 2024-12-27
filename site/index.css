@@ -299,7 +299,7 @@ button{
   border-style:solid;
   border-color:var(--connections-extra-dark-beige);
   border-width:thin;
-  transition: border-color ease .15s, color ease .15s;
+  transition: border-color ease-out .15s, color ease-out .15s;
   z-index:3;
   position:relative;
   background-color:white;
